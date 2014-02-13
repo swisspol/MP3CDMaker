@@ -54,7 +54,15 @@ static TrackKind _TrackKindFromString(NSString* string) {
     if (library) {
       array = [[NSMutableArray alloc] init];
       for (ITLibPlaylist* libraryPlaylist in library.allPlaylists) {
-        if ((libraryPlaylist.distinguishedKind != ITLibDistinguishedPlaylistKindNone) || libraryPlaylist.master) {
+        if (libraryPlaylist.master
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusic)
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMovies)
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindTVShows)
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindiTunesU)
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindPurchases)
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindHomeVideos)
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusicVideos)
+            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindLibraryMusicVideos)) {
           continue;
         }
         Playlist* playlist = [[Playlist alloc] init];
@@ -99,8 +107,15 @@ static TrackKind _TrackKindFromString(NSString* string) {
         array = [[NSMutableArray alloc] init];
         NSDictionary* plistTracks = [plist objectForKey:@"Tracks"];
         for (NSDictionary* plistPlaylist in [plist objectForKey:@"Playlists"]) {
-          if ([[plistPlaylist objectForKey:@"Master"] boolValue] || [[plistPlaylist objectForKey:@"Music"] boolValue] || [[plistPlaylist objectForKey:@"Movies"] boolValue]
-              || [[plistPlaylist objectForKey:@"TV Shows"] boolValue] || [[plistPlaylist objectForKey:@"Podcasts"] boolValue] || [[plistPlaylist objectForKey:@"Purchased Music"] boolValue]) {
+          if ([[plistPlaylist objectForKey:@"Master"] boolValue]
+              || [[plistPlaylist objectForKey:@"Music"] boolValue]
+              || [[plistPlaylist objectForKey:@"Movies"] boolValue]
+              || [[plistPlaylist objectForKey:@"TV Shows"] boolValue]
+              || [[plistPlaylist objectForKey:@"iTunes U"] boolValue]  // TODO: Is this the right string?
+              || [[plistPlaylist objectForKey:@"Purchases"] boolValue]  // TODO: Is this the right string?
+              || [[plistPlaylist objectForKey:@"Home Videos"] boolValue]  // TODO: Is this the right string?
+              || [[plistPlaylist objectForKey:@"Music Videos"] boolValue]  // TODO: Is this the right string?
+              || [[plistPlaylist objectForKey:@"Library Music Videos"] boolValue]) {  // TODO: Is this the right string?
             continue;
           }
           Playlist* playlist = [[Playlist alloc] init];
