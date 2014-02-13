@@ -31,6 +31,12 @@ typedef enum {
   kBitRate_245Kbps_VBR
 } BitRate;
 
+extern NSString* const MP3TranscoderErrorDomain;
+
 @interface MP3Transcoder : NSObject
-+ (BOOL)transcodeAudioFileAtPath:(NSString*)inPath toPath:(NSString*)outPath withBitRate:(BitRate)bitRate progressBlock:(void (^)(float progress, BOOL* stop))block;
++ (BOOL)transcodeAudioFileAtPath:(NSString*)inPath
+                          toPath:(NSString*)outPath
+                     withBitRate:(BitRate)bitRate
+                           error:(NSError**)error
+                   progressBlock:(void (^)(float progress, BOOL* stop))block;
 @end

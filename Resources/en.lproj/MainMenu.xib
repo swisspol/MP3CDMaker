@@ -149,7 +149,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <rect key="contentRect" x="217" y="278" width="1000" height="453"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
-            <value key="minSize" type="size" width="840" height="300"/>
+            <value key="minSize" type="size" width="860" height="300"/>
             <view key="contentView" id="1605">
                 <rect key="frame" x="0.0" y="0.0" width="1000" height="453"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -172,7 +172,7 @@
                                     <tableViewGridLines key="gridStyleMask" vertical="YES"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
-                                        <tableColumn editable="NO" width="28" minWidth="10" maxWidth="10000" id="S2N-Dz-zTN">
+                                        <tableColumn identifier="#" editable="NO" width="28" minWidth="10" maxWidth="10000" id="S2N-Dz-zTN">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="center" title="#">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -184,7 +184,7 @@
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="70" minWidth="10" maxWidth="10000" id="j77-4S-con">
+                                        <tableColumn identifier="conversion" editable="NO" width="70" minWidth="10" maxWidth="10000" id="j77-4S-con">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="center" title="Conversion">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -204,7 +204,7 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="270" minWidth="10" maxWidth="10000" id="hFf-LB-bkR">
+                                        <tableColumn identifier="title" editable="NO" width="270" minWidth="10" maxWidth="10000" id="hFf-LB-bkR">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Title">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -226,7 +226,7 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="270" minWidth="10" maxWidth="10000" id="Lph-IJ-jHg">
+                                        <tableColumn identifier="album" editable="NO" width="270" minWidth="10" maxWidth="10000" id="Lph-IJ-jHg">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Album">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -248,7 +248,7 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="207" minWidth="10" maxWidth="10000" id="LMc-rY-AI2">
+                                        <tableColumn identifier="artist" editable="NO" width="207" minWidth="10" maxWidth="10000" id="LMc-rY-AI2">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Artist">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -270,7 +270,7 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="46" minWidth="10" maxWidth="10000" id="u4R-uB-FHe">
+                                        <tableColumn identifier="time" editable="NO" width="46" minWidth="10" maxWidth="10000" id="u4R-uB-FHe">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="center" title="Time">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -284,15 +284,15 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.duration" id="1rU-bi-BP7">
                                                     <dictionary key="options">
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">DurationTransformer</string>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <string key="NSValueTransformerName">DurationTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="46" minWidth="10" maxWidth="10000" id="a1H-TU-99B">
+                                        <tableColumn identifier="format" editable="NO" width="46" minWidth="10" maxWidth="10000" id="a1H-TU-99B">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="center" title="Format">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -306,10 +306,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.kind" id="W5w-k1-RiX">
                                                     <dictionary key="options">
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">KindTransformer</string>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <string key="NSValueTransformerName">KindTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -447,9 +447,9 @@ DQ
                         </connections>
                     </popUpButton>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="flO-UO-eba">
-                        <rect key="frame" x="412" y="416" width="423" height="14"/>
+                        <rect key="frame" x="412" y="416" width="439" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Only songs in compatible format and DRM free will be loaded from playlist" id="k4n-BI-F7W">
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Only songs in compatible format and DRM free will be loaded from the playlist" id="k4n-BI-F7W">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" white="0.25" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>

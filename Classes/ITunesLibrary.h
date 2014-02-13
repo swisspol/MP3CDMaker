@@ -39,8 +39,9 @@ typedef enum {
 @end
 
 @interface Track ()
-@property(nonatomic, copy) NSString* transcodedPath;
 @property(nonatomic) double level;
+@property(nonatomic, copy) NSString* transcodedPath;
+@property(nonatomic, copy) NSError* transcodingError;
 @end
 
 @interface ITunesLibrary : NSObject

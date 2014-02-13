@@ -26,6 +26,8 @@
 // http://www.ffmpeg.org/ffmpeg-codecs.html#Options-9
 // http://trac.ffmpeg.org/wiki/Encoding%20VBR%20(Variable%20Bit%20Rate)%20mp3%20audio
 
+static void _SetTranscoderErrorFromAVError(NSError** error, int code, NSString* format, ...) NS_FORMAT_FUNCTION(3,4);
+
 // Must match BitRate enum
 static int _monoBitRateLUT[][3] = {
   {0, 0, 0},
@@ -60,6 +62,22 @@ static int _stereoBitRateLUT[][3] = {
   {0, CODEC_FLAG_QSCALE, 0}
 };
 
+NSString* const MP3TranscoderErrorDomain = @"MP3TranscoderErrorDomain";
+
+static void _SetTranscoderErrorFromAVError(NSError** error, int code, NSString* format, ...) {
+  if (error) {
+    va_list arguments;
+    va_start(arguments, format);
+    NSString* message = [[NSString alloc] initWithFormat:format arguments:arguments];
+    va_end(arguments);
+    NSDictionary* info = @{
+                           NSLocalizedDescriptionKey: message,
+                           NSLocalizedFailureReasonErrorKey: [NSString stringWithUTF8String:av_err2str(code)]
+                           };
+    *error = [NSError errorWithDomain:MP3TranscoderErrorDomain code:code userInfo:info];
+  }
+}
+
 @implementation MP3Transcoder
 
 + (void)load {
@@ -68,9 +86,16 @@ static int _stereoBitRateLUT[][3] = {
   avfilter_register_all();
 }
 
-+ (BOOL)transcodeAudioFileAtPath:(NSString*)inPath toPath:(NSString*)outPath withBitRate:(BitRate)bitRate progressBlock:(void (^)(float progress, BOOL* stop))block {
++ (BOOL)transcodeAudioFileAtPath:(NSString*)inPath
+                          toPath:(NSString*)outPath
+                     withBitRate:(BitRate)bitRate
+                           error:(NSError**)error
+                   progressBlock:(void (^)(float progress, BOOL* stop))block {
   BOOL success = NO;
   BOOL stop = NO;
+  if (error) {
+    *error = nil;
+  }
   AVFormatContext* inContext = NULL;
   int result = avformat_open_input(&inContext, [inPath fileSystemRepresentation], NULL, NULL);
   if (result == 0) {
@@ -187,7 +212,7 @@ static int _stereoBitRateLUT[][3] = {
                     avfilter_inout_free(&inputs);
                     avfilter_inout_free(&outputs);
                     if (result < 0) {
-                      NSLog(@"%@: Invalid filter graph", outPath);
+                      _SetTranscoderErrorFromAVError(error, result, @"Failed creating filter graph");
                       avfilter_graph_free(&filterGraph);
                     }
                   }
@@ -247,12 +272,12 @@ static int _stereoBitRateLUT[][3] = {
                                               if (hasPacket) {
                                                 result = av_write_frame(outContext, &outPacket);
                                                 if (result < 0) {
-                                                  NSLog(@"%@: %s", outPath, av_err2str(result));
+                                                  _SetTranscoderErrorFromAVError(error, result, @"Failed writing samples to output file");
                                                 }
                                               }
                                               av_free_packet(&outPacket);
                                             } else {
-                                              NSLog(@"%@: %s", outPath, av_err2str(result));
+                                              _SetTranscoderErrorFromAVError(error, result, @"Failed encoding samples with output codec");
                                             }
                                             
                                             av_frame_unref(filteredFrame);
@@ -260,11 +285,11 @@ static int _stereoBitRateLUT[][3] = {
                                             result = 0;
                                             break;
                                           } else {
-                                            NSLog(@"%@: %s", inPath, av_err2str(result));
+                                            _SetTranscoderErrorFromAVError(error, result, @"Failed retrieving samples from filter graph");
                                           }
                                         } while (result >= 0);
                                       } else {
-                                        NSLog(@"%@: %s", outPath, av_err2str(result));
+                                        _SetTranscoderErrorFromAVError(error, result, @"Failed passing samples to filter graph");
                                       }
                                       
                                     } else {
@@ -279,12 +304,12 @@ static int _stereoBitRateLUT[][3] = {
                                         if (hasPacket) {
                                           result = av_write_frame(outContext, &outPacket);
                                           if (result < 0) {
-                                            NSLog(@"%@: %s", outPath, av_err2str(result));
+                                            _SetTranscoderErrorFromAVError(error, result, @"Failed writing samples to output file");
                                           }
                                         }
                                         av_free_packet(&outPacket);
                                       } else {
-                                        NSLog(@"%@: %s", outPath, av_err2str(result));
+                                        _SetTranscoderErrorFromAVError(error, result, @"Failed encoding samples with output codec");
                                       }
                                       
                                     }
@@ -293,7 +318,7 @@ static int _stereoBitRateLUT[][3] = {
                                     break;
                                   }
                                 } else {
-                                  NSLog(@"%@: %s", inPath, av_err2str(result));
+                                  _SetTranscoderErrorFromAVError(error, result, @"Failed decoding samples with input codec");
                                 }
                               } while (result >= 0);
                               float progress = floorf(100.0 * (double)rawPacket.pts / (double)inStream->duration);
@@ -321,7 +346,7 @@ static int _stereoBitRateLUT[][3] = {
                                 if (hasPacket) {
                                   result = av_write_frame(outContext, &outPacket);
                                   if (result < 0) {
-                                     NSLog(@"%@: %s", outPath, av_err2str(result));
+                                     _SetTranscoderErrorFromAVError(error, result, @"Failed writing samples to output file");
                                     break;
                                   }
                                 } else {
@@ -329,7 +354,7 @@ static int _stereoBitRateLUT[][3] = {
                                 }
                                 av_free_packet(&outPacket);
                               } else {
-                                NSLog(@"%@: %s", outPath, av_err2str(result));
+                                _SetTranscoderErrorFromAVError(error, result, @"Failed encoding samples with output codec");
                                 break;
                               }
                               
@@ -340,21 +365,21 @@ static int _stereoBitRateLUT[][3] = {
                                 block(1.0, &stop);
                                 success = stop ? NO : YES;
                               } else {
-                                NSLog(@"%@: %s", outPath, av_err2str(result));
+                                _SetTranscoderErrorFromAVError(error, result, @"Failed writing output file trailer");
                               }
                             }
                           }
                         } else {
-                          NSLog(@"%@: %s", outPath, av_err2str(result));
+                          _SetTranscoderErrorFromAVError(error, result, @"Failed writing output file header");
                         }
                         
                         avio_close(outContext->pb);
                       } else {
-                        NSLog(@"%@: %s", outPath, av_err2str(result));
+                        _SetTranscoderErrorFromAVError(error, result, @"Failed opening output file");
                       }
                       avcodec_close(outCodecContext);
                     } else {
-                      NSLog(@"%@: %s", outPath, av_err2str(result));
+                      _SetTranscoderErrorFromAVError(error, result, @"Failed opening output audio codec");
                     }
                   }
                   
@@ -362,32 +387,32 @@ static int _stereoBitRateLUT[][3] = {
                     avfilter_graph_free(&filterGraph);
                   }
                 } else {
-                  NSLog(@"%@: No audio codec", outPath);
+                  _SetTranscoderErrorFromAVError(error, 0, @"Failed finding audio codec for output context");
                 }
                 avformat_free_context(outContext);
               } else {
-                NSLog(@"%@: %s", outPath, av_err2str(result));
+                _SetTranscoderErrorFromAVError(error, result, @"Failed creating MP3 output context");
               }
               
               avcodec_close(inCodecContext);
             } else {
-              NSLog(@"%@: %s", inPath, av_err2str(result));
+              _SetTranscoderErrorFromAVError(error, result, @"Failed opening input audio codec");
             }
           } else {
-            NSLog(@"%@: No audio codec", inPath);
+            _SetTranscoderErrorFromAVError(error, 0, @"Failed finding audio codec for input file");
           }
         } else {
-          NSLog(@"%@: Unsupported number of channels", inPath);
+          _SetTranscoderErrorFromAVError(error, 0, @"Unsupported number of channels in input file (%i)", inCodecContext->channels);
         }
       } else {
-        NSLog(@"%@: No audio stream", inPath);
+        _SetTranscoderErrorFromAVError(error, result, @"Failed finding audio stream in input file");
       }
     } else {
-      NSLog(@"%@: %s", inPath, av_err2str(result));
+      _SetTranscoderErrorFromAVError(error, result, @"Failed parsing input file");
     }
     avformat_close_input(&inContext);
   } else {
-    NSLog(@"%@: %s", inPath, av_err2str(result));
+    _SetTranscoderErrorFromAVError(error, result, @"Failed opening input file");
   }
   if (!success) {
     unlink([outPath fileSystemRepresentation]);

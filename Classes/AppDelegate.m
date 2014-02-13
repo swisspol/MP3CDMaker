@@ -98,6 +98,17 @@
   return NO;
 }
 
+- (NSString*)tableView:(NSTableView*)tableView toolTipForCell:(NSCell*)cell rect:(NSRectPointer)rect tableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row mouseLocation:(NSPoint)mouseLocation {
+  if ([tableColumn.identifier isEqualToString:@"conversion"]) {
+    Playlist* playlist = [_arrayController.selectedObjects firstObject];
+    Track* track = [playlist.tracks objectAtIndex:row];
+    if (track.transcodingError) {
+      return [NSString stringWithFormat:NSLocalizedString(@"TOOLTIP_ERROR", nil), track.transcodingError.localizedDescription, track.transcodingError.localizedFailureReason];
+    }
+  }
+  return nil;
+}
+
 - (id)tableView:(NSTableView*)tableView objectValueForTableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row {
   return [NSNumber numberWithInteger:(row + 1)];
 }
@@ -170,9 +181,11 @@
             @autoreleasepool {
               NSString* inPath = [track.location path];
               NSString* outPath = [_cachePath stringByAppendingPathComponent:[[[NSProcessInfo processInfo] globallyUniqueString] stringByAppendingPathExtension:@"mp3"]];
+              NSError* error = nil;
               BOOL success = [MP3Transcoder transcodeAudioFileAtPath:inPath
                                                               toPath:outPath
                                                          withBitRate:[[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate]
+                                                               error:&error
                                                        progressBlock:^(float progress, BOOL* stop) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                   track.level = 100.0 * progress;
@@ -180,8 +193,14 @@
                 *stop = _cancelled;
               }];
               dispatch_async(dispatch_get_main_queue(), ^{
-                track.transcodedPath = success ? outPath : nil;
-                track.level = success ? 100.0 : 0.0;
+                if (success) {
+                  track.level = 100.0;
+                  track.transcodedPath = outPath;
+                  track.transcodingError = nil;
+                } else {
+                  track.level = 0.0;
+                  track.transcodingError = error;
+                }
               });
             }
             dispatch_semaphore_signal(_transcodingSemaphore);

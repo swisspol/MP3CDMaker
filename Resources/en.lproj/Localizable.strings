@@ -19,3 +19,5 @@
 "ALERT_SPACE_TITLE" = "Cannot burn MP3 CD!";
 "ALERT_SPACE_DEFAULT_BUTTON" = "OK";
 "ALERT_SPACE_MESSAGE" = "There is not enough space on the disc (%i MB required for %i MB available).";
+
+"TOOLTIP_ERROR" = "%@ (%@)";
