@@ -146,6 +146,9 @@ static TrackKind _TrackKindFromString(NSString* string) {
       NSLog(@"Failed reading iTunes library XML: %@", error);
     }
   }
+  [array sortUsingComparator:^NSComparisonResult(Playlist* playlist1, Playlist* playlist2) {
+    return [playlist1.name localizedStandardCompare:playlist2.name];
+  }];
   return array;
 }
 

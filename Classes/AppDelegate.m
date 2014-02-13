@@ -51,14 +51,20 @@
   return self;
 }
 
-- (void)awakeFromNib {
-  [_arrayController setSortDescriptors:[NSArray arrayWithObject:[NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES]]];
-}
-
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
-  [_arrayController setContent:[ITunesLibrary loadPlaylists]];
-  
-  [_mainWindow makeKeyAndOrderFront:nil];
+  NSArray* playlists = [ITunesLibrary loadPlaylists];
+  if (playlists.count) {
+    [_arrayController setContent:playlists];
+    [_mainWindow makeKeyAndOrderFront:nil];
+  } else {
+    NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_FATAL_TITLE", nil)
+                                     defaultButton:NSLocalizedString(@"ALERT_FATAL_DEFAULT_BUTTON", nil)
+                                   alternateButton:nil
+                                       otherButton:nil
+                         informativeTextWithFormat:NSLocalizedString(@"ALERT_FATAL_MESSAGE", nil)];
+    [alert runModal];
+    [NSApp terminate:nil];
+  }
 }
 
 - (void)_quitAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
