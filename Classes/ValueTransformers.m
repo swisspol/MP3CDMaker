@@ -48,9 +48,13 @@
 
 - (id)transformedValue:(id)value {
   if (value) {
-    switch ([value intValue]) {
+    TrackKind kind = [value intValue];
+    switch (kind) {
+      case kTrackKind_Unknown: return nil;
       case kTrackKind_MPEG: return @"MPEG";
       case kTrackKind_AAC: return @"AAC";
+      case kTrackKind_AIFF: return @"AIFF";
+      case kTrackKind_WAV: return @"WAV";
     }
   }
   return nil;

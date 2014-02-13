@@ -16,7 +16,9 @@
 #import <libavutil/opt.h>
 #import <libavformat/avformat.h>
 #import <libavcodec/avcodec.h>
-#import <libswresample/swresample.h>
+#import <libavfilter/avfilter.h>
+#import <libavfilter/buffersrc.h>
+#import <libavfilter/buffersink.h>
 
 #import "MP3Transcoder.h"
 
@@ -63,6 +65,7 @@ static int _stereoBitRateLUT[][3] = {
 + (void)load {
   av_register_all();
   avcodec_register_all();
+  avfilter_register_all();
 }
 
 + (BOOL)transcodeAudioFileAtPath:(NSString*)inPath toPath:(NSString*)outPath withBitRate:(BitRate)bitRate progressBlock:(void (^)(float progress, BOOL* stop))block {
@@ -73,14 +76,18 @@ static int _stereoBitRateLUT[][3] = {
   if (result == 0) {
     result = avformat_find_stream_info(inContext, NULL);
     if (result >= 0) {
-      BOOL foundAudioStream = NO;
-      for (int i = 0; i < inContext->nb_streams; ++i) {
-        if (inContext->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
-          AVStream* inStream = inContext->streams[i];
-          AVCodecContext* inCodecContext = inStream->codec;
+      result = av_find_best_stream(inContext, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0);
+      if (result >= 0) {
+        unsigned int streamIndex = result;
+        AVStream* inStream = inContext->streams[streamIndex];
+        AVCodecContext* inCodecContext = inStream->codec;
+        if ((inCodecContext->channels == 1) || (inCodecContext->channels == 2)) {
+          if (inCodecContext->channel_layout == 0) {
+            inCodecContext->channel_layout = av_get_default_channel_layout(inCodecContext->channels);  // Should be AV_CH_LAYOUT_MONO or AV_CH_LAYOUT_STEREO
+          }
           AVCodec* inCodec = avcodec_find_decoder(inCodecContext->codec_id);
           if (inCodec) {
-            result = avcodec_open2(inCodecContext, inCodec, NULL);
+            result = avcodec_open2(inCodecContext, inCodec, NULL);  // MP3 codec outputs AV_SAMPLE_FMT_FLTP, AAC codec outputs AV_SAMPLE_FMT_FLTP, ALAC codec outputs AV_SAMPLE_FMT_S16P and AIFF / WAV codecs output non-planar data like AV_SAMPLE_FMT_S16
             if (result == 0) {
               
               AVFormatContext* outContext = NULL;
@@ -94,6 +101,10 @@ static int _stereoBitRateLUT[][3] = {
                 if (outCodec) {
                   AVStream* outStream = avformat_new_stream(outContext, outCodec);
                   AVCodecContext* outCodecContext = outStream->codec;
+                  outCodecContext->channels = inCodecContext->channels;
+                  outCodecContext->channel_layout = inCodecContext->channel_layout;
+                  outCodecContext->sample_rate = inCodecContext->sample_rate;
+                  outCodecContext->sample_fmt = inCodecContext->sample_fmt;
                   if (inCodecContext->channels == 1) {
                     outCodecContext->bit_rate = _monoBitRateLUT[bitRate][0];
                     outCodecContext->flags = _monoBitRateLUT[bitRate][1];
@@ -104,116 +115,250 @@ static int _stereoBitRateLUT[][3] = {
                     outCodecContext->global_quality = _stereoBitRateLUT[bitRate][2] * FF_QUALITY_SCALE;
                   }
                   outCodecContext->compression_level = FF_COMPRESSION_DEFAULT;  // [0(best/slow)-9(worst/fast)]
-                  outCodecContext->sample_rate = inCodecContext->sample_rate;
-                  outCodecContext->sample_fmt = inCodecContext->sample_fmt;
-                  outCodecContext->channels = inCodecContext->channels;
-                  outCodecContext->channel_layout = inCodecContext->channel_layout;
-                  result = avcodec_open2(outCodecContext, outCodec, NULL);
-                  if (result == 0) {
-                    result = avio_open(&outContext->pb, [outPath fileSystemRepresentation], AVIO_FLAG_WRITE);
+                  
+                  AVFilterGraph* filterGraph = NULL;
+                  AVFilterContext* filterSourceContext = NULL;
+                  AVFilterContext* filterSinkContext = NULL;
+                  if ((outCodecContext->sample_fmt != AV_SAMPLE_FMT_S16P) && (outCodecContext->sample_fmt != AV_SAMPLE_FMT_S32P) && (outCodecContext->sample_fmt != AV_SAMPLE_FMT_FLTP)) {  // MP3 codec supported formats
+                    switch (outCodecContext->sample_fmt) {
+                      case AV_SAMPLE_FMT_NONE: break;
+                      case AV_SAMPLE_FMT_U8: outCodecContext->sample_fmt = AV_SAMPLE_FMT_S16P; break;  // TODO: Is this ideal?
+                      case AV_SAMPLE_FMT_S16: outCodecContext->sample_fmt = AV_SAMPLE_FMT_S16P; break;
+                      case AV_SAMPLE_FMT_S32: outCodecContext->sample_fmt = AV_SAMPLE_FMT_S32P; break;
+                      case AV_SAMPLE_FMT_FLT: outCodecContext->sample_fmt = AV_SAMPLE_FMT_FLTP; break;
+                      case AV_SAMPLE_FMT_DBL: outCodecContext->sample_fmt = AV_SAMPLE_FMT_FLTP; break;
+                      case AV_SAMPLE_FMT_U8P: outCodecContext->sample_fmt = AV_SAMPLE_FMT_S16P; break;  // TODO: Is this ideal?
+                      case AV_SAMPLE_FMT_S16P: break;
+                      case AV_SAMPLE_FMT_S32P: break;
+                      case AV_SAMPLE_FMT_FLTP: break;
+                      case AV_SAMPLE_FMT_DBLP: outCodecContext->sample_fmt = AV_SAMPLE_FMT_FLTP; break;
+                      case AV_SAMPLE_FMT_NB: break;
+                    }
+                    filterGraph = avfilter_graph_alloc();
+                    AVFilterInOut* outputs = NULL;
+                    AVFilterInOut* inputs = NULL;
+                    
+                    AVFilter* sourceFilter = avfilter_get_by_name("abuffer");
+                    AVRational timeBase = inContext->streams[streamIndex]->time_base;
+                    char args[512];
+                    snprintf(args, sizeof(args), "time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
+                             timeBase.num, timeBase.den, inCodecContext->sample_rate, av_get_sample_fmt_name(inCodecContext->sample_fmt), inCodecContext->channel_layout);
+                    result = avfilter_graph_create_filter(&filterSourceContext, sourceFilter, "in", args, NULL, filterGraph);
                     if (result >= 0) {
-                      
-                      result = avformat_write_header(outContext, NULL);
-                      if (result == 0) {
-                        block(0.0, &stop);
-                        float lastProgress = 0.0;
-                        AVFrame* inFrame = avcodec_alloc_frame();
-                        AVPacket inPacket;
-                        do {
-                          if (stop) {
-                            result = -1;
-                            break;
+                      outputs = avfilter_inout_alloc();
+                      outputs->name = av_strdup("in");
+                      outputs->filter_ctx = filterSourceContext;
+                      outputs->pad_idx = 0;
+                      outputs->next = NULL;
+                    }
+                    
+                    AVFilter* sinkFilter = avfilter_get_by_name("abuffersink");
+                    result = avfilter_graph_create_filter(&filterSinkContext, sinkFilter, "out", NULL, NULL, filterGraph);
+                    if (result >= 0) {
+                      enum AVSampleFormat out_sample_fmts[] = {outCodecContext->sample_fmt, -1};
+                      result = av_opt_set_int_list(filterSinkContext, "sample_fmts", out_sample_fmts, -1, AV_OPT_SEARCH_CHILDREN);
+                    }
+                    if (result >= 0) {
+                      int64_t out_channel_layouts[] = {outCodecContext->channel_layout, -1};
+                      result = av_opt_set_int_list(filterSinkContext, "channel_layouts", out_channel_layouts, -1, AV_OPT_SEARCH_CHILDREN);
+                    }
+                    if (result >= 0) {
+                      int out_sample_rates[] = {outCodecContext->sample_rate, -1};
+                      result = av_opt_set_int_list(filterSinkContext, "sample_rates", out_sample_rates, -1, AV_OPT_SEARCH_CHILDREN);
+                    }
+                    if (result >= 0) {
+                      inputs = avfilter_inout_alloc();
+                      inputs->name = av_strdup("out");
+                      inputs->filter_ctx = filterSinkContext;
+                      inputs->pad_idx = 0;
+                      inputs->next = NULL;
+                    }
+                    
+                    if (result >= 0) {
+                      char desc[512];
+                      snprintf(desc, sizeof(desc), "aresample=%d,aformat=sample_fmts=%s:channel_layouts=0x%"PRIx64,
+                               outCodecContext->sample_rate, av_get_sample_fmt_name(outCodecContext->sample_fmt), outCodecContext->channel_layout);
+                      result = avfilter_graph_parse_ptr(filterGraph, desc, &inputs, &outputs, NULL);
+                    }
+                    if (result >= 0) {
+                      result = avfilter_graph_config(filterGraph, NULL);
+                    }
+                    
+                    avfilter_inout_free(&inputs);
+                    avfilter_inout_free(&outputs);
+                    if (result < 0) {
+                      NSLog(@"%@: Invalid filter graph", outPath);
+                      avfilter_graph_free(&filterGraph);
+                    }
+                  }
+                  
+                  if (result >= 0) {
+                    result = avcodec_open2(outCodecContext, outCodec, NULL);
+                    if (result == 0) {
+                      result = avio_open(&outContext->pb, [outPath fileSystemRepresentation], AVIO_FLAG_WRITE);
+                      if (result >= 0) {
+                        
+                        result = avformat_write_header(outContext, NULL);
+                        if (result == 0) {
+                          block(0.0, &stop);
+                          float lastProgress = 0.0;
+                          AVPacket rawPacket;
+                          AVFrame* rawFrame = avcodec_alloc_frame();
+                          AVFrame* filteredFrame = NULL;
+                          if (filterGraph) {
+                            filteredFrame = avcodec_alloc_frame();
                           }
-                          result = av_read_frame(inContext, &inPacket);
-                          if (result < 0) {
-                            if (result == AVERROR_EOF) {
-                              result = 0;
-                            }
-                            break;
-                          }
-                          if (inPacket.stream_index == i) {
-                            int hasFrame;
-                            result = avcodec_decode_audio4(inCodecContext, inFrame, &hasFrame, &inPacket);
-                            if (result >= 0) {
-                              if (hasFrame) {
-                                AVPacket outPacket;
-                                av_init_packet(&outPacket);
-                                outPacket.data = NULL;
-                                outPacket.size = 0;
-                                int hasPacket;
-                                result = avcodec_encode_audio2(outCodecContext, &outPacket, inFrame, &hasPacket);
-                                if (result == 0) {
-                                  if (hasPacket) {
-                                    result = av_write_frame(outContext, &outPacket);
-                                    if (result < 0) {
-                                      NSLog(@"%@: %s", outPath, av_err2str(result));
-                                    }
-                                  }
-                                  av_free_packet(&outPacket);
-                                } else {
-                                  NSLog(@"%@: %s", outPath, av_err2str(result));
-                                }
-                              }
-                            } else {
-                              NSLog(@"%@: %s", inPath, av_err2str(result));
-                            }
-                            float progress = floorf(100.0 * (double)inPacket.pts / (double)inStream->duration);
-                            if (progress > lastProgress) {
-                              block(progress / 100.0, &stop);
-                              lastProgress = progress;
-                            }
-                          }
-                          av_free_packet(&inPacket);
-                        } while (result >= 0);
-                        avcodec_free_frame(&inFrame);
-                        if (result >= 0) {
-                          while (1) {
-                            AVPacket outPacket;
-                            av_init_packet(&outPacket);
-                            outPacket.data = NULL;
-                            outPacket.size = 0;
-                            int hasPacket;
-                            result = avcodec_encode_audio2(outCodecContext, &outPacket, NULL, &hasPacket);
-                            if (result == 0) {
-                              if (hasPacket) {
-                                result = av_write_frame(outContext, &outPacket);
-                                if (result < 0) {
-                                   NSLog(@"%@: %s", outPath, av_err2str(result));
-                                  break;
-                                }
-                              } else {
-                                break;
-                              }
-                              av_free_packet(&outPacket);
-                            } else {
-                              NSLog(@"%@: %s", outPath, av_err2str(result));
+                          do {
+                            if (stop) {
+                              result = -1;
                               break;
                             }
+                            result = av_read_frame(inContext, &rawPacket);
+                            if (result < 0) {
+                              if (result == AVERROR_EOF) {
+                                result = 0;
+                              }
+                              break;
+                            }
+                            if (rawPacket.stream_index == streamIndex) {
+                              AVPacket inPacket = rawPacket;
+                              do {
+                                int hasFrame = 0;
+                                result = avcodec_decode_audio4(inCodecContext, rawFrame, &hasFrame, &inPacket);
+                                if (result >= 0) {
+                                  inPacket.size -= result;
+                                  inPacket.data += result;
+                                  if (hasFrame) {
+                                    if (filterGraph) {
+                                      
+                                      result = av_buffersrc_add_frame_flags(filterSourceContext, rawFrame, 0);
+                                      do {
+                                        result = av_buffersink_get_frame(filterSinkContext, filteredFrame);
+                                        if (result >= 0) {
+                                          
+                                          AVPacket outPacket;
+                                          av_init_packet(&outPacket);
+                                          outPacket.data = NULL;
+                                          outPacket.size = 0;
+                                          int hasPacket = 0;
+                                          result = avcodec_encode_audio2(outCodecContext, &outPacket, filteredFrame, &hasPacket);
+                                          if (result == 0) {
+                                            if (hasPacket) {
+                                              result = av_write_frame(outContext, &outPacket);
+                                              if (result < 0) {
+                                                NSLog(@"%@: %s", outPath, av_err2str(result));
+                                              }
+                                            }
+                                            av_free_packet(&outPacket);
+                                          } else {
+                                            NSLog(@"%@: %s", outPath, av_err2str(result));
+                                          }
+                                          
+                                          av_frame_unref(filteredFrame);
+                                        } else if ((result == AVERROR(EAGAIN)) || (result == AVERROR_EOF)) {
+                                          result = 0;
+                                          break;
+                                        } else {
+                                          NSLog(@"%@: %s", inPath, av_err2str(result));
+                                        }
+                                      } while (result >= 0);
+                                      
+                                    } else {
+                                      
+                                      AVPacket outPacket;
+                                      av_init_packet(&outPacket);
+                                      outPacket.data = NULL;
+                                      outPacket.size = 0;
+                                      int hasPacket = 0;
+                                      result = avcodec_encode_audio2(outCodecContext, &outPacket, rawFrame, &hasPacket);
+                                      if (result == 0) {
+                                        if (hasPacket) {
+                                          result = av_write_frame(outContext, &outPacket);
+                                          if (result < 0) {
+                                            NSLog(@"%@: %s", outPath, av_err2str(result));
+                                          }
+                                        }
+                                        av_free_packet(&outPacket);
+                                      } else {
+                                        NSLog(@"%@: %s", outPath, av_err2str(result));
+                                      }
+                                      
+                                    }
+                                  }
+                                  if (inPacket.size <= 0) {
+                                    break;
+                                  }
+                                } else {
+                                  NSLog(@"%@: %s", inPath, av_err2str(result));
+                                }
+                              } while (result >= 0);
+                              float progress = floorf(100.0 * (double)rawPacket.pts / (double)inStream->duration);
+                              if (progress > lastProgress) {
+                                block(progress / 100.0, &stop);
+                                lastProgress = progress;
+                              }
+                            }
+                            av_free_packet(&rawPacket);
+                          } while (result >= 0);
+                          if (filterGraph) {
+                            avcodec_free_frame(&filteredFrame);
                           }
+                          avcodec_free_frame(&rawFrame);
                           if (result >= 0) {
-                            result = av_write_trailer(outContext);
-                            if (result == 0) {
-                              block(1.0, &stop);
-                              success = stop ? NO : YES;
-                            } else {
-                              NSLog(@"%@: %s", outPath, av_err2str(result));
+                            while (1) {
+                              
+                              AVPacket outPacket;
+                              av_init_packet(&outPacket);
+                              outPacket.data = NULL;
+                              outPacket.size = 0;
+                              int hasPacket = 0;
+                              result = avcodec_encode_audio2(outCodecContext, &outPacket, NULL, &hasPacket);
+                              if (result == 0) {
+                                if (hasPacket) {
+                                  result = av_write_frame(outContext, &outPacket);
+                                  if (result < 0) {
+                                     NSLog(@"%@: %s", outPath, av_err2str(result));
+                                    break;
+                                  }
+                                } else {
+                                  break;
+                                }
+                                av_free_packet(&outPacket);
+                              } else {
+                                NSLog(@"%@: %s", outPath, av_err2str(result));
+                                break;
+                              }
+                              
+                            }
+                            if (result >= 0) {
+                              result = av_write_trailer(outContext);
+                              if (result == 0) {
+                                block(1.0, &stop);
+                                success = stop ? NO : YES;
+                              } else {
+                                NSLog(@"%@: %s", outPath, av_err2str(result));
+                              }
                             }
                           }
+                        } else {
+                          NSLog(@"%@: %s", outPath, av_err2str(result));
                         }
+                        
+                        avio_close(outContext->pb);
                       } else {
                         NSLog(@"%@: %s", outPath, av_err2str(result));
                       }
-                      
-                      avio_close(outContext->pb);
+                      avcodec_close(outCodecContext);
                     } else {
                       NSLog(@"%@: %s", outPath, av_err2str(result));
                     }
-                    avcodec_close(outCodecContext);
-                  } else {
-                    NSLog(@"%@: %s", outPath, av_err2str(result));
+                  }
+                  
+                  if (filterGraph) {
+                    avfilter_graph_free(&filterGraph);
                   }
                 } else {
-                  NSLog(@"%@: no audio codec", outPath);
+                  NSLog(@"%@: No audio codec", outPath);
                 }
                 avformat_free_context(outContext);
               } else {
@@ -225,14 +370,13 @@ static int _stereoBitRateLUT[][3] = {
               NSLog(@"%@: %s", inPath, av_err2str(result));
             }
           } else {
-            NSLog(@"%@: no audio codec", inPath);
+            NSLog(@"%@: No audio codec", inPath);
           }
-          foundAudioStream = YES;
-          break;
+        } else {
+          NSLog(@"%@: Unsupported number of channels", inPath);
         }
-      }
-      if (!foundAudioStream) {
-        NSLog(@"%@: no audio stream", inPath);
+      } else {
+        NSLog(@"%@: No audio stream", inPath);
       }
     } else {
       NSLog(@"%@: %s", inPath, av_err2str(result));

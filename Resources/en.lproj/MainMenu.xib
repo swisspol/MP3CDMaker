@@ -147,35 +147,39 @@
         </customObject>
         <window title="Car CD Maker" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="mainWindow" animationBehavior="default" id="1604" userLabel="Main Window">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
-            <rect key="contentRect" x="217" y="278" width="1000" height="500"/>
+            <rect key="contentRect" x="217" y="278" width="1000" height="453"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
+            <value key="minSize" type="size" width="840" height="300"/>
             <view key="contentView" id="1605">
-                <rect key="frame" x="0.0" y="0.0" width="1000" height="500"/>
+                <rect key="frame" x="0.0" y="0.0" width="1000" height="453"/>
                 <autoresizingMask key="autoresizingMask"/>
+                <userGuides>
+                    <userLayoutGuide location="20" affinity="minX"/>
+                </userGuides>
                 <subviews>
-                    <scrollView autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="V1U-Cd-CRf">
-                        <rect key="frame" x="24" y="98" width="956" height="341"/>
+                    <scrollView autohidesScrollers="YES" horizontalLineScroll="16" horizontalPageScroll="10" verticalLineScroll="16" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="V1U-Cd-CRf">
+                        <rect key="frame" x="20" y="56" width="960" height="341"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <clipView key="contentView" id="qzy-qV-nFC">
-                            <rect key="frame" x="1" y="17" width="954" height="323"/>
+                            <rect key="frame" x="1" y="17" width="958" height="323"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <tableView focusRingType="none" verticalHuggingPriority="750" allowsExpansionToolTips="YES" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" headerView="0Zm-EU-7cs" id="I5S-UQ-Rx8">
-                                    <rect key="frame" x="0.0" y="0.0" width="954" height="323"/>
+                                <tableView focusRingType="none" verticalHuggingPriority="750" allowsExpansionToolTips="YES" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowHeight="14" headerView="0Zm-EU-7cs" id="I5S-UQ-Rx8">
+                                    <rect key="frame" x="0.0" y="0.0" width="958" height="323"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                     <tableViewGridLines key="gridStyleMask" vertical="YES"/>
                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                     <tableColumns>
-                                        <tableColumn editable="NO" width="34" minWidth="10" maxWidth="10000" id="S2N-Dz-zTN">
+                                        <tableColumn editable="NO" width="28" minWidth="10" maxWidth="10000" id="S2N-Dz-zTN">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="center" title="#">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
                                             </tableHeaderCell>
-                                            <textFieldCell key="dataCell" scrollable="YES" lineBreakMode="clipping" allowsUndo="NO" alignment="right" title="Text Cell" id="vjx-Sg-3Rw">
-                                                <font key="font" metaFont="system"/>
+                                            <textFieldCell key="dataCell" controlSize="small" scrollable="YES" lineBreakMode="clipping" allowsUndo="NO" alignment="right" title="Text Cell" id="vjx-Sg-3Rw">
+                                                <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
@@ -200,14 +204,14 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="241" minWidth="10" maxWidth="10000" id="hFf-LB-bkR">
+                                        <tableColumn editable="NO" width="270" minWidth="10" maxWidth="10000" id="hFf-LB-bkR">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Title">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" white="0.33333298560000002" alpha="1" colorSpace="calibratedWhite"/>
                                             </tableHeaderCell>
-                                            <textFieldCell key="dataCell" lineBreakMode="truncatingMiddle" allowsUndo="NO" alignment="left" title="Text Cell" id="hGg-gP-brA">
-                                                <font key="font" metaFont="system"/>
+                                            <textFieldCell key="dataCell" controlSize="small" lineBreakMode="truncatingMiddle" allowsUndo="NO" alignment="left" title="Text Cell" id="hGg-gP-brA">
+                                                <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
@@ -222,14 +226,14 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="250" minWidth="10" maxWidth="10000" id="Lph-IJ-jHg">
+                                        <tableColumn editable="NO" width="270" minWidth="10" maxWidth="10000" id="Lph-IJ-jHg">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Album">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" white="0.33333298560000002" alpha="1" colorSpace="calibratedWhite"/>
                                             </tableHeaderCell>
-                                            <textFieldCell key="dataCell" lineBreakMode="truncatingMiddle" allowsUndo="NO" alignment="left" title="Text Cell" id="7At-Y4-JIW">
-                                                <font key="font" metaFont="system"/>
+                                            <textFieldCell key="dataCell" controlSize="small" lineBreakMode="truncatingMiddle" allowsUndo="NO" alignment="left" title="Text Cell" id="7At-Y4-JIW">
+                                                <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
@@ -244,14 +248,14 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="242" minWidth="10" maxWidth="10000" id="LMc-rY-AI2">
+                                        <tableColumn editable="NO" width="207" minWidth="10" maxWidth="10000" id="LMc-rY-AI2">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Artist">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
                                             </tableHeaderCell>
-                                            <textFieldCell key="dataCell" lineBreakMode="truncatingMiddle" allowsUndo="NO" alignment="left" title="Text Cell" id="PvV-XZ-DjR">
-                                                <font key="font" metaFont="system"/>
+                                            <textFieldCell key="dataCell" controlSize="small" lineBreakMode="truncatingMiddle" allowsUndo="NO" alignment="left" title="Text Cell" id="PvV-XZ-DjR">
+                                                <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
@@ -266,24 +270,24 @@
                                                 </binding>
                                             </connections>
                                         </tableColumn>
-                                        <tableColumn editable="NO" width="50" minWidth="10" maxWidth="10000" id="u4R-uB-FHe">
+                                        <tableColumn editable="NO" width="46" minWidth="10" maxWidth="10000" id="u4R-uB-FHe">
                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="center" title="Time">
                                                 <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
                                             </tableHeaderCell>
-                                            <textFieldCell key="dataCell" scrollable="YES" lineBreakMode="clipping" allowsUndo="NO" alignment="right" title="Text Cell" id="lZW-Pj-ztb">
-                                                <font key="font" metaFont="system"/>
+                                            <textFieldCell key="dataCell" controlSize="small" scrollable="YES" lineBreakMode="clipping" allowsUndo="NO" alignment="right" title="Text Cell" id="lZW-Pj-ztb">
+                                                <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.duration" id="1rU-bi-BP7">
                                                     <dictionary key="options">
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">DurationTransformer</string>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <string key="NSValueTransformerName">DurationTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -294,18 +298,18 @@
                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
                                             </tableHeaderCell>
-                                            <textFieldCell key="dataCell" scrollable="YES" lineBreakMode="clipping" allowsUndo="NO" alignment="center" title="Text Cell" id="4y7-66-TGu">
-                                                <font key="font" metaFont="system"/>
+                                            <textFieldCell key="dataCell" controlSize="small" scrollable="YES" lineBreakMode="clipping" allowsUndo="NO" alignment="center" title="Text Cell" id="4y7-66-TGu">
+                                                <font key="font" metaFont="smallSystem"/>
                                                 <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.kind" id="W5w-k1-RiX">
                                                     <dictionary key="options">
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">KindTransformer</string>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <string key="NSValueTransformerName">KindTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -328,12 +332,12 @@
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <tableHeaderView key="headerView" id="0Zm-EU-7cs">
-                            <rect key="frame" x="0.0" y="0.0" width="954" height="17"/>
+                            <rect key="frame" x="0.0" y="0.0" width="958" height="17"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </tableHeaderView>
                     </scrollView>
                     <popUpButton verticalHuggingPriority="750" id="RtV-bG-kPO">
-                        <rect key="frame" x="171" y="450" width="200" height="26"/>
+                        <rect key="frame" x="159" y="409" width="250" height="26"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <popUpButtonCell key="cell" type="push" title="Item 1" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingMiddle" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="Pnd-bu-map" id="7in-9o-t1y">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -349,22 +353,22 @@
                         <connections>
                             <binding destination="jPY-2w-sy6" name="content" keyPath="arrangedObjects" id="6o7-V2-DjX"/>
                             <binding destination="jPY-2w-sy6" name="contentValues" keyPath="arrangedObjects.name" previousBinding="6o7-V2-DjX" id="MLm-m8-0Be"/>
-                            <binding destination="494" name="enabled" keyPath="transcoding" id="V2e-hK-FKV">
-                                <dictionary key="options">
-                                    <string key="NSValueTransformerName">NSNegateBoolean</string>
-                                </dictionary>
-                            </binding>
                             <binding destination="jPY-2w-sy6" name="selectedIndex" keyPath="selectionIndex" previousBinding="MLm-m8-0Be" id="AbC-6Y-TQ2">
                                 <dictionary key="options">
                                     <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                     <bool key="NSConditionallySetsEnabled" value="NO"/>
                                 </dictionary>
                             </binding>
+                            <binding destination="494" name="enabled" keyPath="transcoding" id="V2e-hK-FKV">
+                                <dictionary key="options">
+                                    <string key="NSValueTransformerName">NSNegateBoolean</string>
+                                </dictionary>
+                            </binding>
                         </connections>
                     </popUpButton>
                     <button verticalHuggingPriority="750" id="FFd-gb-I1c">
-                        <rect key="frame" x="500" y="37" width="150" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <rect key="frame" x="836" y="13" width="150" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="Burn MP3 CD" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qOe-ty-bSW">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -382,8 +386,8 @@ DQ
                         </connections>
                     </button>
                     <button verticalHuggingPriority="750" id="QSZ-Qa-Pn7">
-                        <rect key="frame" x="400" y="37" width="100" height="32"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                        <rect key="frame" x="736" y="13" width="100" height="32"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="push" title="Stop" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="679-uZ-Fgu">
                             <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                             <font key="font" metaFont="system"/>
@@ -396,11 +400,11 @@ DQ
                         </connections>
                     </button>
                     <popUpButton verticalHuggingPriority="750" id="bmS-34-0T7">
-                        <rect key="frame" x="139" y="41" width="230" height="26"/>
+                        <rect key="frame" x="105" y="18" width="230" height="26"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <popUpButtonCell key="cell" type="push" title="Lowest (64 Kbps)" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="5N7-IT-B8t" id="3W1-zn-mCr">
                             <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
-                            <font key="font" metaFont="system"/>
+                            <font key="font" metaFont="menu"/>
                             <menu key="menu" title="OtherViews" id="qjo-VM-xRB">
                                 <items>
                                     <menuItem title="Lowest (64 Kbps)" state="on" tag="1" id="5N7-IT-B8t"/>
@@ -443,16 +447,16 @@ DQ
                         </connections>
                     </popUpButton>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="flO-UO-eba">
-                        <rect key="frame" x="434" y="456" width="449" height="14"/>
+                        <rect key="frame" x="412" y="416" width="423" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Only songs in MPEG or unprotected AAC format are displayed." id="k4n-BI-F7W">
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Only songs in compatible format and DRM free will be loaded from playlist" id="k4n-BI-F7W">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" white="0.25" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="EEp-gh-1DA">
-                        <rect key="frame" x="22" y="456" width="145" height="17"/>
+                        <rect key="frame" x="10" y="415" width="145" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Select iTunes Playlist:" id="ecn-26-jvD">
                             <font key="font" metaFont="system"/>
@@ -461,7 +465,7 @@ DQ
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Le9-Wb-pLV">
-                        <rect key="frame" x="34" y="47" width="101" height="17"/>
+                        <rect key="frame" x="7" y="24" width="94" height="17"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="MP3 Quality:" id="c1a-x9-cGS">
                             <font key="font" metaFont="system"/>

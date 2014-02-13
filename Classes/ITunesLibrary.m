@@ -28,6 +28,12 @@ static TrackKind _TrackKindFromString(NSString* string) {
   if ([string hasSuffix:@"AAC audio file"]) {
     return kTrackKind_AAC;
   }
+  if ([string hasSuffix:@"AIFF audio file"]) {
+    return kTrackKind_AIFF;
+  }
+  if ([string hasSuffix:@"WAV audio file"]) {
+    return kTrackKind_WAV;
+  }
   return kTrackKind_Unknown;
 }
 

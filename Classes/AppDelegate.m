@@ -61,6 +61,10 @@
   [_mainWindow makeKeyAndOrderFront:nil];
 }
 
+- (void)_quitAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  [NSApp replyToApplicationShouldTerminate:(returnCode == NSOKButton ? YES : NO)];
+}
+
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
   if (self.transcoding) {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_QUIT_TITLE", nil)
@@ -68,9 +72,7 @@
                                    alternateButton:NSLocalizedString(@"ALERT_QUIT_ALTERNATE_BUTTON", nil)
                                        otherButton:nil
                          informativeTextWithFormat:NSLocalizedString(@"ALERT_QUIT_MESSAGE", nil)];
-    [alert beginSheetModalForWindow:_mainWindow completionHandler:^(NSModalResponse returnCode) {
-      [NSApp replyToApplicationShouldTerminate:(returnCode == NSOKButton ? YES : NO)];
-    }];
+    [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_quitAlertDidEnd:returnCode:contextInfo:) contextInfo:NULL];
     return NSTerminateLater;
   }
   return NSTerminateNow;
@@ -94,10 +96,10 @@
 }
 
 - (void)_burnSetupPanelDidEnd:(DRSetupPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
+  Playlist* playlist = (__bridge Playlist*)contextInfo;
   if (returnCode == NSOKButton) {
-    DRBurn* burn = [(DRBurnSetupPanel*)panel burnObject];
+    [panel orderOut:nil];
     
-    Playlist* playlist = [_arrayController.selectedObjects firstObject];
     DRFolder* rootFolder = [DRFolder virtualFolderWithName:playlist.name];
     NSUInteger index = 0;
     for (Track* track in playlist.tracks) {
@@ -109,28 +111,53 @@
     }
     DRTrack* track = [DRTrack trackForRootFolder:rootFolder];
     
-    DRBurnProgressPanel* progressPanel = [DRBurnProgressPanel progressPanel];
-    [progressPanel beginProgressSheetForBurn:burn layout:track modalForWindow:_mainWindow];
+    DRBurn* burn = [(DRBurnSetupPanel*)panel burnObject];
+    NSDictionary* deviceStatus = [[burn device] status];
+    uint64_t availableFreeSectors = [[[deviceStatus valueForKey:DRDeviceMediaInfoKey] valueForKey:DRDeviceMediaFreeSpaceKey] longLongValue];
+    uint64_t trackLengthInSectors = [track estimateLength];
+    if (trackLengthInSectors < availableFreeSectors) {
+      DRBurnProgressPanel* progressPanel = [DRBurnProgressPanel progressPanel];
+      [progressPanel beginProgressSheetForBurn:burn layout:track modalForWindow:_mainWindow];
+    } else {
+      NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_SPACE_TITLE", nil)
+                                       defaultButton:NSLocalizedString(@"ALERT_SPACE_DEFAULT_BUTTON", nil)
+                                     alternateButton:nil
+                                         otherButton:nil
+                           informativeTextWithFormat:NSLocalizedString(@"ALERT_SPACE_MESSAGE", nil), (int)(trackLengthInSectors * 2048 / (1000 * 1000)), (int)(availableFreeSectors * 2048 / (1000 * 1000))];  // Display MB not MiB like in Finder
+      alert.alertStyle = NSCriticalAlertStyle;
+      [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+    }
   }
+  CFRelease((__bridge CFTypeRef)playlist);
 }
 
-- (void)_burnPlaylist {
+- (void)_burnPlaylist:(Playlist*)playlist {
   DRBurnSetupPanel* setupPanel = [DRBurnSetupPanel setupPanel];
   [setupPanel setCanSelectTestBurn:YES];
-  [setupPanel beginSetupSheetForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_burnSetupPanelDidEnd:returnCode:contextInfo:) contextInfo:NULL];
+  [setupPanel beginSetupSheetForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_burnSetupPanelDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(playlist)];
 }
 
-- (void)_transcodePlaylist {
-  Playlist* playlist = [_arrayController.selectedObjects firstObject];
+- (void)_missingAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  Playlist* playlist = (__bridge Playlist*)contextInfo;
+  if (returnCode == NSOKButton) {
+    [alert.window orderOut:nil];
+    [self _burnPlaylist:playlist];
+  }
+  CFRelease((__bridge CFTypeRef)playlist);
+}
+
+- (void)_transcodePlaylist:(Playlist*)playlist {
   self.transcoding = YES;
   _cancelled = NO;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     @autoreleasepool {
+      NSMutableSet* transcodedTracks = [NSMutableSet set];
       for (Track* track in playlist.tracks) {
         if (_cancelled) {
           break;
         }
-        if (track.transcodedPath == nil) {
+        if (!track.transcodedPath && ![transcodedTracks containsObject:track]) {
+          [transcodedTracks addObject:track];
           dispatch_semaphore_wait(_transcodingSemaphore, DISPATCH_TIME_FOREVER);
           dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
             @autoreleasepool {
@@ -163,7 +190,31 @@
       dispatch_async(dispatch_get_main_queue(), ^{
         self.transcoding = NO;
         if (_cancelled == NO) {
-          [self _burnPlaylist];
+          NSUInteger totalCount = playlist.tracks.count;
+          NSUInteger transcodedCount = 0;
+          for (Track* track in playlist.tracks) {
+            if (track.transcodedPath) {
+              ++transcodedCount;
+            }
+          }
+          if (transcodedCount == 0) {
+            NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_EMPTY_TITLE", nil)
+                                             defaultButton:NSLocalizedString(@"ALERT_EMPTY_DEFAULT_BUTTON", nil)
+                                           alternateButton:nil
+                                               otherButton:nil
+                                 informativeTextWithFormat:NSLocalizedString(@"ALERT_EMPTY_MESSAGE", nil)];
+            alert.alertStyle = NSCriticalAlertStyle;
+            [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+          } else if (transcodedCount < totalCount) {
+            NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_MISSING_TITLE", nil)
+                                             defaultButton:NSLocalizedString(@"ALERT_MISSING_DEFAULT_BUTTON", nil)
+                                           alternateButton:NSLocalizedString(@"ALERT_MISSING_ALTERNATE_BUTTON", nil)
+                                               otherButton:nil
+                                 informativeTextWithFormat:NSLocalizedString(@"ALERT_MISSING_MESSAGE", nil), (int)(totalCount - transcodedCount), (int)totalCount];
+            [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_missingAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(playlist)];
+          } else {
+            [self _burnPlaylist:playlist];
+          }
         }
       });
     }
@@ -171,7 +222,8 @@
 }
 
 - (IBAction)make:(id)sender {
-  [self _transcodePlaylist];
+  Playlist* playlist = [_arrayController.selectedObjects firstObject];
+  [self _transcodePlaylist:playlist];
 }
 
 - (IBAction)cancelTranscoding:(id)sender {

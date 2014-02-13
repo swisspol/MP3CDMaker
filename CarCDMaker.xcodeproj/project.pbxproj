@@ -260,6 +260,7 @@
 					"-lavformat",
 					"-lavutil",
 					"-lswresample",
+					"-lswscale",
 				);
 				PRODUCT_NAME = "Car CD Maker";
 			};
@@ -293,6 +294,7 @@
 					"-lavformat",
 					"-lavutil",
 					"-lswresample",
+					"-lswscale",
 				);
 				PRODUCT_NAME = "Car CD Maker";
 			};

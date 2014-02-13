@@ -18,7 +18,9 @@
 typedef enum {
   kTrackKind_Unknown = 0,
   kTrackKind_MPEG,
-  kTrackKind_AAC
+  kTrackKind_AAC,
+  kTrackKind_AIFF,
+  kTrackKind_WAV
 } TrackKind;
 
 @interface Playlist : NSObject
