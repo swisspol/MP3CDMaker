@@ -47,6 +47,8 @@
     }
     _transcoders = MIN(MAX(cores, 1), 4);
     _transcodingSemaphore = dispatch_semaphore_create(_transcoders);
+    _numberFormatter = [[NSNumberFormatter alloc] init];
+    _numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
   }
   return self;
 }
@@ -56,6 +58,7 @@
   NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
   if (playlists.count) {
     [_arrayController setContent:playlists];
+    [self updateInfo:nil];
     [_mainWindow makeKeyAndOrderFront:nil];
   } else {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_FATAL_TITLE", nil)
@@ -113,6 +116,22 @@
   return [NSNumber numberWithInteger:(row + 1)];
 }
 
+- (IBAction)updateInfo:(id)sender {
+  NSTimeInterval duration = 0.0;
+  Playlist* playlist = [_arrayController.selectedObjects firstObject];
+  for (Track* track in playlist.tracks) {
+    duration += track.duration;
+  }
+  NSUInteger hours = duration / 3600.0;
+  NSUInteger minutes = fmod(duration, 3600.0) / 60.0;
+  NSUInteger seconds = fmod(fmod(duration, 3600.0), 60.0);
+  BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
+  NSUInteger size = duration * (NSTimeInterval)KBitsPerSecondFromBitRate(bitRate, true) * 1000.0 / 8.0;
+  NSString* countString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:playlist.tracks.count]];
+  NSString* sizeString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(size / (1000 * 1000))]];  // Display MB not MiB like in Finder
+  [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, (int)hours, (int)minutes, (int)seconds, sizeString]];
+}
+
 - (void)_burnSetupPanelDidEnd:(DRSetupPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
   Playlist* playlist = (__bridge Playlist*)contextInfo;
   if (returnCode == NSOKButton) {
@@ -165,6 +184,7 @@
 }
 
 - (void)_transcodePlaylist:(Playlist*)playlist {
+  BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
   self.transcoding = YES;
   _cancelled = NO;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -184,7 +204,7 @@
               NSError* error = nil;
               BOOL success = [MP3Transcoder transcodeAudioFileAtPath:inPath
                                                               toPath:outPath
-                                                         withBitRate:[[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate]
+                                                         withBitRate:bitRate
                                                                error:&error
                                                        progressBlock:^(float progress, BOOL* stop) {
                 dispatch_async(dispatch_get_main_queue(), ^{

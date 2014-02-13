@@ -29,40 +29,44 @@
 static void _SetTranscoderErrorFromAVError(NSError** error, int code, NSString* format, ...) NS_FORMAT_FUNCTION(3,4);
 
 // Must match BitRate enum
-static int _monoBitRateLUT[][3] = {
-  {0, 0, 0},
-  {32 * 1000, 0, 0},
-  {48 * 1000, 0, 0},
-  {64 * 1000, 0, 0},
-  {80 * 1000, 0, 0},
-  {96 * 1000, 0, 0},
-  {128 * 1000, 0, 0},
-  {160 * 1000, 0, 0},
-  {0, CODEC_FLAG_QSCALE, 9},
-  {0, CODEC_FLAG_QSCALE, 9},
-  {0, CODEC_FLAG_QSCALE, 8},
-  {0, CODEC_FLAG_QSCALE, 7},
-  {0, CODEC_FLAG_QSCALE, 5}
+static int _monoBitRateLUT[][4] = {
+  {0, 0, 0, 0},
+  {32 * 1000, 0, 0, 32},
+  {48 * 1000, 0, 0, 48},
+  {64 * 1000, 0, 0, 64},
+  {80 * 1000, 0, 0, 80},
+  {96 * 1000, 0, 0, 96},
+  {128 * 1000, 0, 0, 128},
+  {160 * 1000, 0, 0, 160},
+  {0, CODEC_FLAG_QSCALE, 9, 65},
+  {0, CODEC_FLAG_QSCALE, 9, 65},
+  {0, CODEC_FLAG_QSCALE, 8, 85},
+  {0, CODEC_FLAG_QSCALE, 7, 100},
+  {0, CODEC_FLAG_QSCALE, 5, 130}
 };
 
 // Must match BitRate enum
-static int _stereoBitRateLUT[][3] = {
-  {0, 0, 0},
-  {64 * 1000, 0, 0},
-  {96 * 1000, 0, 0},
-  {128 * 1000, 0, 0},
-  {160 * 1000, 0, 0},
-  {192 * 1000, 0, 0},
-  {256 * 1000, 0, 0},
-  {320 * 1000, 0, 0},
-  {0, CODEC_FLAG_QSCALE, 9},
-  {0, CODEC_FLAG_QSCALE, 6},
-  {0, CODEC_FLAG_QSCALE, 4},
-  {0, CODEC_FLAG_QSCALE, 2},
-  {0, CODEC_FLAG_QSCALE, 0}
+static int _stereoBitRateLUT[][4] = {
+  {0, 0, 0, 0},
+  {64 * 1000, 0, 0, 64},
+  {96 * 1000, 0, 0, 96},
+  {128 * 1000, 0, 0, 128},
+  {160 * 1000, 0, 0, 160},
+  {192 * 1000, 0, 0, 192},
+  {256 * 1000, 0, 0, 256},
+  {320 * 1000, 0, 0, 320},
+  {0, CODEC_FLAG_QSCALE, 9, 65},
+  {0, CODEC_FLAG_QSCALE, 6, 115},
+  {0, CODEC_FLAG_QSCALE, 4, 165},
+  {0, CODEC_FLAG_QSCALE, 2, 190},
+  {0, CODEC_FLAG_QSCALE, 0, 245}
 };
 
 NSString* const MP3TranscoderErrorDomain = @"MP3TranscoderErrorDomain";
+
+NSUInteger KBitsPerSecondFromBitRate(BitRate bitRate, BOOL isStereo) {
+  return (isStereo ? _stereoBitRateLUT[bitRate][3] : _monoBitRateLUT[bitRate][3]);
+}
 
 static void _SetTranscoderErrorFromAVError(NSError** error, int code, NSString* format, ...) {
   if (error) {

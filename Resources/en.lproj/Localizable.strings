@@ -21,3 +21,5 @@
 "ALERT_SPACE_MESSAGE" = "There is not enough space on the disc (%i MB required for %i MB available).";
 
 "TOOLTIP_ERROR" = "%@ (%@)";
+
+"PLAYLIST_INFO" = "%@ songs for %i:%i:%i total time (estimated MP3 CD of %@ MB)";

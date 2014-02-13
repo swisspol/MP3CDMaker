@@ -29,7 +29,11 @@
 - (id)transformedValue:(id)value {
   if (value) {
     NSTimeInterval duration = [value doubleValue];
-    return [NSString stringWithFormat:@"%.0f:%02.0f", duration / 60.0, fmod(duration, 60.0)];
+    if (duration >= 3600.0) {
+      return [NSString stringWithFormat:@"%.0f:%02.0f:%02.0f", duration / 3600.0, fmod(duration, 3600.0) / 60.0, fmod(fmod(duration, 3600.0), 60.0)];
+    } else {
+      return [NSString stringWithFormat:@"%.0f:%02.0f", duration / 60.0, fmod(duration, 60.0)];
+    }
   }
   return nil;
 }
