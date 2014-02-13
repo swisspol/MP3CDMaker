@@ -16,6 +16,22 @@
 #import "ValueTransformers.h"
 #import "ITunesLibrary.h"
 
+@implementation IsNotEmptyTransformer
+
++ (Class)transformedValueClass {
+  return [NSNumber class];
+}
+
++ (BOOL)allowsReverseTransformation {
+  return NO;
+}
+
+- (id)transformedValue:(id)value {
+  return [NSNumber numberWithBool:([value count] ? YES : NO)];
+}
+
+@end
+
 @implementation DurationTransformer
 
 + (Class)transformedValueClass {

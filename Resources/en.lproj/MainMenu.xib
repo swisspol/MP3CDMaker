@@ -380,6 +380,15 @@ DQ
                         </buttonCell>
                         <connections>
                             <action selector="make:" target="494" id="0s3-SI-Spb"/>
+                            <binding destination="ois-Es-bWL" name="enabled2" keyPath="arrangedObjects" previousBinding="si3-eC-Rsm" id="flA-QU-fpL">
+                                <dictionary key="options">
+                                    <integer key="NSMultipleValuesPlaceholder" value="-1"/>
+                                    <integer key="NSNotApplicablePlaceholder" value="-1"/>
+                                    <integer key="NSNoSelectionPlaceholder" value="-1"/>
+                                    <integer key="NSNullPlaceholder" value="-1"/>
+                                    <string key="NSValueTransformerName">IsNotEmptyTransformer</string>
+                                </dictionary>
+                            </binding>
                             <binding destination="494" name="enabled" keyPath="transcoding" id="si3-eC-Rsm">
                                 <dictionary key="options">
                                     <string key="NSValueTransformerName">NSNegateBoolean</string>
@@ -450,9 +459,9 @@ DQ
                         </connections>
                     </popUpButton>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="flO-UO-eba">
-                        <rect key="frame" x="412" y="416" width="439" height="14"/>
+                        <rect key="frame" x="412" y="416" width="489" height="14"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Only songs in compatible format and DRM free will be loaded from the playlist" id="k4n-BI-F7W">
+                        <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Only checked songs in compatible format and DRM free will be loaded from the playlist" id="k4n-BI-F7W">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" white="0.25" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>

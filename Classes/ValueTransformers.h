@@ -15,6 +15,9 @@
 
 #import <AppKit/AppKit.h>
 
+@interface IsNotEmptyTransformer : NSValueTransformer
+@end
+
 @interface DurationTransformer : NSValueTransformer
 @end
 

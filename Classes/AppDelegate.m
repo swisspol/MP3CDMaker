@@ -56,7 +56,7 @@
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
   NSError* error = nil;
   NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
-  if (playlists.count) {
+  if (playlists) {
     [_arrayController setContent:playlists];
     [self updateInfo:nil];
     [_mainWindow makeKeyAndOrderFront:nil];
