@@ -232,36 +232,40 @@ static int _stereoBitRateLUT[][3] = {
                                     if (filterGraph) {
                                       
                                       result = av_buffersrc_add_frame_flags(filterSourceContext, rawFrame, 0);
-                                      do {
-                                        result = av_buffersink_get_frame(filterSinkContext, filteredFrame);
-                                        if (result >= 0) {
-                                          
-                                          AVPacket outPacket;
-                                          av_init_packet(&outPacket);
-                                          outPacket.data = NULL;
-                                          outPacket.size = 0;
-                                          int hasPacket = 0;
-                                          result = avcodec_encode_audio2(outCodecContext, &outPacket, filteredFrame, &hasPacket);
-                                          if (result == 0) {
-                                            if (hasPacket) {
-                                              result = av_write_frame(outContext, &outPacket);
-                                              if (result < 0) {
-                                                NSLog(@"%@: %s", outPath, av_err2str(result));
+                                      if (result >= 0) {
+                                        do {
+                                          result = av_buffersink_get_frame(filterSinkContext, filteredFrame);
+                                          if (result >= 0) {
+                                            
+                                            AVPacket outPacket;
+                                            av_init_packet(&outPacket);
+                                            outPacket.data = NULL;
+                                            outPacket.size = 0;
+                                            int hasPacket = 0;
+                                            result = avcodec_encode_audio2(outCodecContext, &outPacket, filteredFrame, &hasPacket);
+                                            if (result == 0) {
+                                              if (hasPacket) {
+                                                result = av_write_frame(outContext, &outPacket);
+                                                if (result < 0) {
+                                                  NSLog(@"%@: %s", outPath, av_err2str(result));
+                                                }
                                               }
+                                              av_free_packet(&outPacket);
+                                            } else {
+                                              NSLog(@"%@: %s", outPath, av_err2str(result));
                                             }
-                                            av_free_packet(&outPacket);
+                                            
+                                            av_frame_unref(filteredFrame);
+                                          } else if ((result == AVERROR(EAGAIN)) || (result == AVERROR_EOF)) {
+                                            result = 0;
+                                            break;
                                           } else {
-                                            NSLog(@"%@: %s", outPath, av_err2str(result));
+                                            NSLog(@"%@: %s", inPath, av_err2str(result));
                                           }
-                                          
-                                          av_frame_unref(filteredFrame);
-                                        } else if ((result == AVERROR(EAGAIN)) || (result == AVERROR_EOF)) {
-                                          result = 0;
-                                          break;
-                                        } else {
-                                          NSLog(@"%@: %s", inPath, av_err2str(result));
-                                        }
-                                      } while (result >= 0);
+                                        } while (result >= 0);
+                                      } else {
+                                        NSLog(@"%@: %s", outPath, av_err2str(result));
+                                      }
                                       
                                     } else {
                                       
