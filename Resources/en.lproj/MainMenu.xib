@@ -14,11 +14,11 @@
         <customObject id="-3" userLabel="Application"/>
         <menu title="Main Menu" systemMenu="main" id="1418" userLabel="Main Menu">
             <items>
-                <menuItem title="Car CD Maker" id="1424">
+                <menuItem title="MP3 CD Maker" id="1424">
                     <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Car CD Maker" systemMenu="apple" id="1431">
+                    <menu key="submenu" title="MP3 CD Maker" systemMenu="apple" id="1431">
                         <items>
-                            <menuItem title="About Car CD Maker" id="1442">
+                            <menuItem title="About MP3 CD Maker" id="1442">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="orderFrontStandardAboutPanel:" target="-2" id="1578"/>
@@ -30,7 +30,7 @@
                                 <menu key="submenu" title="Services" systemMenu="services" id="1443"/>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1438"/>
-                            <menuItem title="Hide Car CD Maker" keyEquivalent="h" id="1441">
+                            <menuItem title="Hide MP3 CD Maker" keyEquivalent="h" id="1441">
                                 <connections>
                                     <action selector="hide:" target="-3" id="1575"/>
                                 </connections>
@@ -48,7 +48,7 @@
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1433"/>
-                            <menuItem title="Quit Car CD Maker" keyEquivalent="q" id="1439">
+                            <menuItem title="Quit MP3 CD Maker" keyEquivalent="q" id="1439">
                                 <connections>
                                     <action selector="terminate:" target="-2" id="1577"/>
                                 </connections>
@@ -145,7 +145,7 @@
                 <outlet property="mainWindow" destination="1604" id="1606"/>
             </connections>
         </customObject>
-        <window title="Car CD Maker" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="mainWindow" animationBehavior="default" id="1604" userLabel="Main Window">
+        <window title="MP3 CD Maker" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="mainWindow" animationBehavior="default" id="1604" userLabel="Main Window">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <rect key="contentRect" x="217" y="278" width="1000" height="453"/>
             <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
@@ -284,10 +284,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.duration" id="1rU-bi-BP7">
                                                     <dictionary key="options">
-                                                        <string key="NSValueTransformerName">DurationTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">DurationTransformer</string>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -306,10 +306,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.kind" id="W5w-k1-RiX">
                                                     <dictionary key="options">
-                                                        <string key="NSValueTransformerName">KindTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">KindTransformer</string>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
