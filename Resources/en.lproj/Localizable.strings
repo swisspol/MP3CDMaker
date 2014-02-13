@@ -1,0 +1,4 @@
+"ALERT_QUIT_TITLE" = "Are you sure you want to quit?";
+"ALERT_QUIT_DEFAULT_BUTTON" = "Quit";
+"ALERT_QUIT_ALTERNATE_BUTTON" = "Don't Quit";
+"ALERT_QUIT_MESSAGE" = "Transcoding operation is currently in progress.";
