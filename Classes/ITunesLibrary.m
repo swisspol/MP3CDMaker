@@ -70,7 +70,7 @@ static TrackKind _TrackKindFromString(NSString* string) {
         NSMutableArray* tracks = [[NSMutableArray alloc] init];
         for (ITLibMediaItem* libraryItem in libraryPlaylist.items) {
           TrackKind kind = _TrackKindFromString(libraryItem.kind);
-          if ((kind == kTrackKind_Unknown) || libraryItem.drmProtected) {
+          if ((kind == kTrackKind_Unknown) || libraryItem.userDisabled || libraryItem.drmProtected) {
             continue;
           }
           NSURL* location = libraryItem.location;
@@ -125,7 +125,7 @@ static TrackKind _TrackKindFromString(NSString* string) {
             NSString* trackID = [[item objectForKey:@"Track ID"] stringValue];
             NSDictionary* plistTrack = [plistTracks objectForKey:trackID];
             TrackKind kind = _TrackKindFromString([plistTrack objectForKey:@"Kind"]);
-            if ((kind == kTrackKind_Unknown) || [[plistTrack objectForKey:@"Protected"] boolValue]) {
+            if ((kind == kTrackKind_Unknown) || [[plistTrack objectForKey:@"Disabled"] boolValue] || [[plistTrack objectForKey:@"Protected"] boolValue]) {
               continue;
             }
             NSURL* location = [NSURL URLWithString:[plistTrack objectForKey:@"Location"]];
