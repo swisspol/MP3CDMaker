@@ -116,6 +116,10 @@
   return [NSNumber numberWithInteger:(row + 1)];
 }
 
+@end
+
+@implementation AppDelegate (Actions)
+
 - (IBAction)updateInfo:(id)sender {
   NSTimeInterval duration = 0.0;
   Playlist* playlist = [_arrayController.selectedObjects firstObject];

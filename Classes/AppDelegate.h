@@ -27,6 +27,9 @@
 @property(nonatomic, assign) IBOutlet NSArrayController* arrayController;
 @property(nonatomic, assign) IBOutlet NSTextField* infoTextField;
 @property(nonatomic, getter = isTranscoding) BOOL transcoding;
+@end
+
+@interface AppDelegate (Actions)
 - (IBAction)updateInfo:(id)sender;
 - (IBAction)make:(id)sender;
 - (IBAction)cancelTranscoding:(id)sender;
