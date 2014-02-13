@@ -46,12 +46,11 @@ static TrackKind _TrackKindFromString(NSString* string) {
 @implementation ITunesLibrary
 
 // TODO: Sandbox entitlement bug may prevent accessing iTunes media folder (http://www.cocoabuilder.com/archive/cocoa/312617-music-read-only-sandbox-entitlement-doesn-seem-to-work.html)
-+ (NSArray*)loadPlaylists {
++ (NSArray*)loadPlaylists:(NSError**)error {
   NSMutableDictionary* cache = [[NSMutableDictionary alloc] init];
   NSMutableArray* array = nil;
   if (NSClassFromString(@"ITLibrary")) {
-    NSError* error = nil;
-    ITLibrary* library = [ITLibrary libraryWithAPIVersion:@"1.0" error:&error];  // TODO: This leaks thousands of objects as of iTunes 11.1.4
+    ITLibrary* library = [ITLibrary libraryWithAPIVersion:@"1.0" error:error];  // TODO: This leaks thousands of objects as of iTunes 11.1.4
     if (library) {
       array = [[NSMutableArray alloc] init];
       for (ITLibPlaylist* libraryPlaylist in library.allPlaylists) {
@@ -88,17 +87,14 @@ static TrackKind _TrackKindFromString(NSString* string) {
         playlist.tracks = tracks;
         [array addObject:playlist];
       }
-    } else {
-      NSLog(@"Failed opening iTunes library: %@", error);
     }
   } else {
     NSLog(@"iTunesLibrary.framework not available: falling back to reading iTunes library XML file directly");
     NSString* musicPath = [NSSearchPathForDirectoriesInDomains(NSMusicDirectory, NSUserDomainMask, YES) firstObject];
     NSString* plistPath = [musicPath stringByAppendingPathComponent:@"iTunes/iTunes Music Library.xml"];
-    NSError* error = nil;
-    NSData* plistData = [NSData dataWithContentsOfFile:plistPath options:NSDataReadingMappedIfSafe error:&error];
+    NSData* plistData = [NSData dataWithContentsOfFile:plistPath options:NSDataReadingMappedIfSafe error:error];
     if (plistData) {
-      NSDictionary* plist = [NSPropertyListSerialization propertyListWithData:plistData options:NSPropertyListImmutable format:NULL error:&error];
+      NSDictionary* plist = [NSPropertyListSerialization propertyListWithData:plistData options:NSPropertyListImmutable format:NULL error:error];
       if (plist) {
         array = [[NSMutableArray alloc] init];
         NSDictionary* plistTracks = [plist objectForKey:@"Tracks"];
@@ -139,11 +135,7 @@ static TrackKind _TrackKindFromString(NSString* string) {
           playlist.tracks = tracks;
           [array addObject:playlist];
         }
-      } else {
-        NSLog(@"Failed parsing iTunes library XML: %@", error);
       }
-    } else {
-      NSLog(@"Failed reading iTunes library XML: %@", error);
     }
   }
   [array sortUsingComparator:^NSComparisonResult(Playlist* playlist1, Playlist* playlist2) {

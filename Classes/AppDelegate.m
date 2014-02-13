@@ -52,7 +52,8 @@
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
-  NSArray* playlists = [ITunesLibrary loadPlaylists];
+  NSError* error = nil;
+  NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
   if (playlists.count) {
     [_arrayController setContent:playlists];
     [_mainWindow makeKeyAndOrderFront:nil];
@@ -61,7 +62,7 @@
                                      defaultButton:NSLocalizedString(@"ALERT_FATAL_DEFAULT_BUTTON", nil)
                                    alternateButton:nil
                                        otherButton:nil
-                         informativeTextWithFormat:NSLocalizedString(@"ALERT_FATAL_MESSAGE", nil)];
+                         informativeTextWithFormat:NSLocalizedString(@"ALERT_FATAL_MESSAGE", nil), error.localizedDescription];
     [alert runModal];
     [NSApp terminate:nil];
   }

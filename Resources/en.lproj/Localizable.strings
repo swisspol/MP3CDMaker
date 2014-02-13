@@ -1,6 +1,6 @@
 "ALERT_FATAL_TITLE" = "Can't load playlists from iTunes library!";
 "ALERT_FATAL_DEFAULT_BUTTON" = "Quit";
-"ALERT_FATAL_MESSAGE" = "Make sure your iTunes library is located at \"Music/iTunes\" in your home folder.";
+"ALERT_FATAL_MESSAGE" = "%@\n\nMake sure your iTunes library is located at \"Music/iTunes\" in your home folder.";
 
 "ALERT_QUIT_TITLE" = "Are you sure you want to quit?";
 "ALERT_QUIT_DEFAULT_BUTTON" = "Quit";
