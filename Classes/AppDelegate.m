@@ -265,8 +265,16 @@
 - (void)_prepareDiscWithName:(NSString*)name tracks:(NSArray*)tracks {
   _cancelled = NO;
   BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
-  BOOL skipMPEG = [[NSUserDefaults standardUserDefaults] boolForKey:kUserDefaultKey_SkipMPEG];
   self.transcoding = YES;
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:kUserDefaultKey_SkipMPEG]) {
+    for (Track* track in tracks) {
+      if ((track.kind == kTrackKind_MPEG) && !track.transcodedPath) {
+        track.level = 100.0;
+        track.transcodedPath = [track.location path];
+        track.transcodingError = nil;
+      }
+    }
+  }
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     @autoreleasepool {
       NSMutableSet* processedTracks = [NSMutableSet set];
@@ -276,43 +284,35 @@
         }
         if (!track.transcodedPath && ![processedTracks containsObject:track]) {
           [processedTracks addObject:track];
-          if (skipMPEG && (track.kind == kTrackKind_MPEG)) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-              track.level = 100.0;
-              track.transcodedPath = [track.location path];
-              track.transcodingError = nil;
-            });
-          } else {
-            dispatch_semaphore_wait(_transcodingSemaphore, DISPATCH_TIME_FOREVER);
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-              @autoreleasepool {
-                NSString* inPath = [track.location path];
-                NSString* outPath = [_cachePath stringByAppendingPathComponent:[[[NSProcessInfo processInfo] globallyUniqueString] stringByAppendingPathExtension:@"mp3"]];
-                NSError* error = nil;
-                BOOL success = [MP3Transcoder transcodeAudioFileAtPath:inPath
-                                                                toPath:outPath
-                                                           withBitRate:bitRate
-                                                                 error:&error
-                                                         progressBlock:^(float progress, BOOL* stop) {
-                  dispatch_async(dispatch_get_main_queue(), ^{
-                    track.level = 100.0 * progress;
-                  });
-                  *stop = _cancelled;
-                }];
+          dispatch_semaphore_wait(_transcodingSemaphore, DISPATCH_TIME_FOREVER);
+          dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+            @autoreleasepool {
+              NSString* inPath = [track.location path];
+              NSString* outPath = [_cachePath stringByAppendingPathComponent:[[[NSProcessInfo processInfo] globallyUniqueString] stringByAppendingPathExtension:@"mp3"]];
+              NSError* error = nil;
+              BOOL success = [MP3Transcoder transcodeAudioFileAtPath:inPath
+                                                              toPath:outPath
+                                                         withBitRate:bitRate
+                                                               error:&error
+                                                       progressBlock:^(float progress, BOOL* stop) {
                 dispatch_async(dispatch_get_main_queue(), ^{
-                  if (success) {
-                    track.level = 100.0;
-                    track.transcodedPath = outPath;
-                    track.transcodingError = nil;
-                  } else {
-                    track.level = 0.0;
-                    track.transcodingError = error;
-                  }
+                  track.level = 100.0 * progress;
                 });
-              }
-              dispatch_semaphore_signal(_transcodingSemaphore);
-            });
-          }
+                *stop = _cancelled;
+              }];
+              dispatch_async(dispatch_get_main_queue(), ^{
+                if (success) {
+                  track.level = 100.0;
+                  track.transcodedPath = outPath;
+                  track.transcodingError = nil;
+                } else {
+                  track.level = 0.0;
+                  track.transcodingError = error;
+                }
+              });
+            }
+            dispatch_semaphore_signal(_transcodingSemaphore);
+          });
         }
       }
       for (NSUInteger i = 0; i < _transcoders; ++i) {
