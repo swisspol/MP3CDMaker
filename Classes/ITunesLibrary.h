@@ -42,6 +42,7 @@ typedef enum {
 @interface Track ()
 @property(nonatomic) double level;
 @property(nonatomic, copy) NSString* transcodedPath;
+@property(nonatomic) NSUInteger transcodedSize;
 @property(nonatomic, copy) NSError* transcodingError;
 @end
 

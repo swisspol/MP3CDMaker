@@ -16,6 +16,7 @@
 #import <DiscRecording/DiscRecording.h>
 #import <DiscRecordingUI/DiscRecordingUI.h>
 #import <sys/sysctl.h>
+#import <sys/stat.h>
 
 #import "AppDelegate.h"
 #import "ITunesLibrary.h"
@@ -32,6 +33,14 @@
 @interface AppDelegate ()
 @property(nonatomic, getter = isCancelled) BOOL cancelled;
 @end
+
+static NSUInteger _GetFileSize(NSString* path) {
+  struct stat info;
+  if (lstat([path fileSystemRepresentation], &info) == 0) {
+    return info.st_size;
+  }
+  return 0;
+}
 
 @implementation MP3Disc
 @end
@@ -170,6 +179,7 @@
     for (Track* track in playlist.tracks) {
       track.level = 0.0;
       track.transcodedPath = nil;
+      track.transcodedSize = 0;
       track.transcodingError = nil;
     }
   }
@@ -184,6 +194,7 @@
       if (track.kind == kTrackKind_MPEG) {
         track.level = 0.0;
         track.transcodedPath = nil;  // TODO: This will (temporarily) leak the transcoded file
+        track.transcodedSize = 0;
         track.transcodingError = nil;
       }
     }
@@ -202,13 +213,23 @@
 - (void)_burnDisc:(MP3Disc*)disc force:(BOOL)force {
   NSDictionary* deviceStatus = [[disc.burn device] status];
   uint64_t availableFreeSectors = [[[deviceStatus valueForKey:DRDeviceMediaInfoKey] valueForKey:DRDeviceMediaFreeSpaceKey] longLongValue];
+  uint64_t availableFreeBytes = availableFreeSectors * kSectorSize;
   while (1) {
     DRFolder* rootFolder = [DRFolder virtualFolderWithName:disc.name];
+    uint64_t estimatedTrackLengthInBytes = 0;
     NSUInteger index = 0;
     for (Track* track in disc.tracks) {
       DRFile* file = [DRFile fileWithPath:track.transcodedPath];
-      [file setBaseName:[NSString stringWithFormat:@"%03lu - %@.mp3", (unsigned long)++index, track.title]];
+      [file setBaseName:[NSString stringWithFormat:@"%03lu - %@.mp3", index + 1, track.title]];
       [rootFolder addChild:file];
+      if (force) {
+        estimatedTrackLengthInBytes += track.transcodedSize;
+        if (estimatedTrackLengthInBytes >= availableFreeBytes) {
+          [disc.tracks removeObjectsInRange:NSMakeRange(index, disc.tracks.count - index)];
+          break;
+        }
+      }
+      index += 1;
     }
     DRTrack* track = [DRTrack trackForRootFolder:rootFolder];
     uint64_t trackLengthInSectors = [track estimateLength];
@@ -273,6 +294,7 @@
       if ((track.kind == kTrackKind_MPEG) && !track.transcodedPath) {
         track.level = 100.0;
         track.transcodedPath = [track.location path];
+        track.transcodedSize = _GetFileSize(track.transcodedPath);  // TODO: Could we trust iTunes metadata?
         track.transcodingError = nil;
       }
     }
@@ -307,6 +329,7 @@
                 if (success) {
                   track.level = 100.0;
                   track.transcodedPath = outPath;
+                  track.transcodedSize = _GetFileSize(outPath);
                   track.transcodingError = nil;
                 } else {
                   track.level = 0.0;
