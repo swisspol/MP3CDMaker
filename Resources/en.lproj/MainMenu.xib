@@ -104,9 +104,15 @@
                                     <action selector="delete:" target="-1" id="1572"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="vwU-Tr-dEe"/>
                             <menuItem title="Select All" keyEquivalent="a" id="1526">
                                 <connections>
                                     <action selector="selectAll:" target="-1" id="1573"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Deselect All" keyEquivalent="A" id="9Bj-iy-wXQ">
+                                <connections>
+                                    <action selector="deselectAll:" target="-1" id="6Zy-3J-lEI"/>
                                 </connections>
                             </menuItem>
                         </items>
@@ -141,10 +147,11 @@
         </menu>
         <customObject id="494" userLabel="AppDelegate" customClass="AppDelegate">
             <connections>
-                <outlet property="arrayController" destination="jPY-2w-sy6" id="GgG-UK-Too"/>
                 <outlet property="infoTextField" destination="Ge0-B4-9As" id="I2n-5i-0hX"/>
                 <outlet property="mainWindow" destination="1604" id="1606"/>
+                <outlet property="playlistController" destination="jPY-2w-sy6" id="I6b-Sh-6rz"/>
                 <outlet property="tableView" destination="I5S-UQ-Rx8" id="dxX-yZ-kfq"/>
+                <outlet property="trackController" destination="ois-Es-bWL" id="hhg-cT-w2j"/>
             </connections>
         </customObject>
         <window title="MP3 CD Maker" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="mainWindow" animationBehavior="default" id="1604" userLabel="Main Window">
@@ -166,7 +173,7 @@
                             <rect key="frame" x="1" y="17" width="958" height="328"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <tableView focusRingType="none" verticalHuggingPriority="750" allowsExpansionToolTips="YES" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowHeight="14" headerView="0Zm-EU-7cs" id="I5S-UQ-Rx8">
+                                <tableView focusRingType="none" verticalHuggingPriority="750" allowsExpansionToolTips="YES" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" rowHeight="14" headerView="0Zm-EU-7cs" id="I5S-UQ-Rx8">
                                     <rect key="frame" x="0.0" y="0.0" width="958" height="328"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <size key="intercellSpacing" width="3" height="2"/>
@@ -475,8 +482,8 @@ DQ
                         </textFieldCell>
                     </textField>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" id="Ge0-B4-9As">
-                        <rect key="frame" x="478" y="15" width="504" height="14"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                        <rect key="frame" x="532" y="15" width="450" height="14"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
                         <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="&lt;INFO>" id="a68-c7-ZVu">
                             <font key="font" metaFont="smallSystem"/>
                             <color key="textColor" white="0.25" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>

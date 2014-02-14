@@ -87,8 +87,13 @@ static NSUInteger _GetFileSize(NSString* path) {
   NSUInteger bitRate = KBitsPerSecondFromBitRate([[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate], true);
   NSTimeInterval duration = 0.0;
   NSUInteger size = 0;
-  Playlist* playlist = [_arrayController.selectedObjects firstObject];
-  for (Track* track in playlist.tracks) {
+  NSArray* tracks = _trackController.selectedObjects;
+  NSString* format = NSLocalizedString(@"PLAYLIST_INFO_SELECTED", nil);
+  if (!tracks.count) {
+    tracks = _trackController.arrangedObjects;
+    format = NSLocalizedString(@"PLAYLIST_INFO_ALL", nil);
+  }
+  for (Track* track in tracks) {
     duration += track.duration;
     if (skipMPEG && (track.kind == kTrackKind_MPEG)) {
       size += track.size;
@@ -99,17 +104,17 @@ static NSUInteger _GetFileSize(NSString* path) {
   NSUInteger hours = duration / 3600.0;
   NSUInteger minutes = fmod(duration, 3600.0) / 60.0;
   NSUInteger seconds = fmod(fmod(duration, 3600.0), 60.0);
-  NSString* countString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:playlist.tracks.count]];
+  NSString* countString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:tracks.count]];
   NSString* sizeString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(size / (1000 * 1000))]];  // Display MB not MiB like in Finder
   NSString* timeString = hours > 0 ? [NSString stringWithFormat:@"%lu:%02lu:%02lu", hours, minutes, seconds] : [NSString stringWithFormat:@"%lu:%02lu", minutes, seconds];
-  [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, timeString, sizeString]];
+  [_infoTextField setStringValue:[NSString stringWithFormat:format, countString, timeString, sizeString]];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
   NSError* error = nil;
   NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
   if (playlists) {
-    [_arrayController setContent:playlists];
+    [_playlistController setContent:playlists];
     [self _updateInfo];
     [_mainWindow makeKeyAndOrderFront:nil];
   } else {
@@ -149,14 +154,13 @@ static NSUInteger _GetFileSize(NSString* path) {
   return NO;
 }
 
-- (BOOL)tableView:(NSTableView*)tableView shouldSelectRow:(NSInteger)row {
-  return NO;
+- (void)tableViewSelectionDidChange:(NSNotification*)notification {
+  [self _updateInfo];
 }
 
 - (NSString*)tableView:(NSTableView*)tableView toolTipForCell:(NSCell*)cell rect:(NSRectPointer)rect tableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row mouseLocation:(NSPoint)mouseLocation {
   if ([tableColumn.identifier isEqualToString:@"conversion"]) {
-    Playlist* playlist = [_arrayController.selectedObjects firstObject];
-    Track* track = [playlist.tracks objectAtIndex:row];
+    Track* track = [_trackController.arrangedObjects objectAtIndex:row];
     if (track.transcodingError) {
       return [NSString stringWithFormat:NSLocalizedString(@"TOOLTIP_ERROR", nil), track.transcodingError.localizedDescription, track.transcodingError.localizedFailureReason];
     }
@@ -180,7 +184,7 @@ static NSUInteger _GetFileSize(NSString* path) {
   [self _updateInfo];
   
   [self _clearCache];
-  for (Playlist* playlist in _arrayController.arrangedObjects) {
+  for (Playlist* playlist in _playlistController.arrangedObjects) {
     for (Track* track in playlist.tracks) {
       track.level = 0.0;
       track.transcodedPath = nil;
@@ -194,7 +198,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 - (IBAction)updateSkip:(id)sender {
   [self _updateInfo];
   
-  for (Playlist* playlist in _arrayController.arrangedObjects) {
+  for (Playlist* playlist in _playlistController.arrangedObjects) {
     for (Track* track in playlist.tracks) {
       if (track.kind == kTrackKind_MPEG) {
         track.level = 0.0;
@@ -448,8 +452,12 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (IBAction)make:(id)sender {
-  Playlist* playlist = [_arrayController.selectedObjects firstObject];
-  [self _prepareDiscWithName:playlist.name tracks:playlist.tracks];
+  Playlist* playlist = [_playlistController.selectedObjects firstObject];
+  NSArray* tracks = _trackController.selectedObjects;
+  if (!tracks.count) {
+    tracks = _trackController.arrangedObjects;
+  }
+  [self _prepareDiscWithName:playlist.name tracks:tracks];
 }
 
 - (IBAction)cancelTranscoding:(id)sender {

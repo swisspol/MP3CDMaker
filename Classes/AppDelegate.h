@@ -26,7 +26,8 @@
 }
 @property(nonatomic, assign) IBOutlet NSWindow* mainWindow;
 @property(nonatomic, assign) IBOutlet NSTableView* tableView;
-@property(nonatomic, assign) IBOutlet NSArrayController* arrayController;
+@property(nonatomic, assign) IBOutlet NSArrayController* playlistController;
+@property(nonatomic, assign) IBOutlet NSArrayController* trackController;
 @property(nonatomic, assign) IBOutlet NSTextField* infoTextField;
 @property(nonatomic, getter = isTranscoding) BOOL transcoding;
 @end

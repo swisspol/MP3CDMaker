@@ -35,4 +35,5 @@
 
 "TOOLTIP_ERROR" = "%@ (%@)";
 
-"PLAYLIST_INFO" = "%@ songs for %@ total time (%@ MB estimated MP3 CD size)";
+"PLAYLIST_INFO_ALL" = "%@ songs in playlist for %@ total time (%@ MB estimated MP3 CD size)";
+"PLAYLIST_INFO_SELECTED" = "%@ songs selected for %@ total time (%@ MB estimated MP3 CD size)";
