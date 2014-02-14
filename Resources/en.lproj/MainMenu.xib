@@ -285,10 +285,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.duration" id="1rU-bi-BP7">
                                                     <dictionary key="options">
-                                                        <string key="NSValueTransformerName">DurationTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">DurationTransformer</string>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -307,10 +307,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.kind" id="W5w-k1-RiX">
                                                     <dictionary key="options">
-                                                        <string key="NSValueTransformerName">KindTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">KindTransformer</string>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -382,10 +382,10 @@ DQ
                             <action selector="make:" target="494" id="0s3-SI-Spb"/>
                             <binding destination="ois-Es-bWL" name="enabled2" keyPath="arrangedObjects" previousBinding="si3-eC-Rsm" id="flA-QU-fpL">
                                 <dictionary key="options">
-                                    <integer key="NSMultipleValuesPlaceholder" value="-1"/>
+                                    <integer key="NSNullPlaceholder" value="-1"/>
                                     <integer key="NSNotApplicablePlaceholder" value="-1"/>
                                     <integer key="NSNoSelectionPlaceholder" value="-1"/>
-                                    <integer key="NSNullPlaceholder" value="-1"/>
+                                    <integer key="NSMultipleValuesPlaceholder" value="-1"/>
                                     <string key="NSValueTransformerName">IsNotEmptyTransformer</string>
                                 </dictionary>
                             </binding>
@@ -495,7 +495,7 @@ DQ
                         </textFieldCell>
                     </textField>
                     <button id="snj-km-iCH">
-                        <rect key="frame" x="17" y="12" width="321" height="20"/>
+                        <rect key="frame" x="104" y="12" width="275" height="20"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <buttonCell key="cell" type="check" title="Don't convert songs already in MPEG format" bezelStyle="regularSquare" imagePosition="left" controlSize="small" state="on" inset="2" id="9Sw-uu-u62">
                             <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
