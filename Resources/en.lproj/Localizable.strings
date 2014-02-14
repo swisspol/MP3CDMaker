@@ -16,9 +16,10 @@
 "ALERT_MISSING_ALTERNATE_BUTTON" = "Don't Burn";
 "ALERT_MISSING_MESSAGE" = "%i songs out of %i in the playlist failed to convert to MP3 format and will be missing from the MP3 CD.";
 
-"ALERT_SPACE_TITLE" = "Cannot burn MP3 CD!";
-"ALERT_SPACE_DEFAULT_BUTTON" = "OK";
-"ALERT_SPACE_MESSAGE" = "There is not enough space on the disc (%i MB required for %i MB available).";
+"ALERT_SPACE_TITLE" = "Are you sure you want to burn the MP3 CD?";
+"ALERT_SPACE_DEFAULT_BUTTON" = "Burn";
+"ALERT_SPACE_ALTERNATE_BUTTON" = "Don't Burn";
+"ALERT_SPACE_MESSAGE" = "There is not enough space on the disc (%i MB required for %i MB available): one or more songs at the end of the playlist will be missing from the MP3 CD.";
 
 "TOOLTIP_ERROR" = "%@ (%@)";
 

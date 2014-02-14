@@ -21,8 +21,19 @@
 #import "ITunesLibrary.h"
 #import "MP3Transcoder.h"
 
+#define kSectorSize 2048
+
+@interface MP3Disc : NSObject
+@property(nonatomic, retain) NSString* name;
+@property(nonatomic, retain) NSMutableArray* tracks;
+@property(nonatomic, retain) DRBurn* burn;
+@end
+
 @interface AppDelegate ()
 @property(nonatomic, getter = isCancelled) BOOL cancelled;
+@end
+
+@implementation MP3Disc
 @end
 
 @implementation AppDelegate
@@ -136,70 +147,90 @@
   [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, (int)hours, (int)minutes, (int)seconds, sizeString]];
 }
 
-- (void)_burnSetupPanelDidEnd:(DRSetupPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
-  Playlist* playlist = (__bridge Playlist*)contextInfo;
+- (void)_spaceAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSOKButton) {
-    [panel orderOut:nil];
-    
-    DRFolder* rootFolder = [DRFolder virtualFolderWithName:playlist.name];
+    [self _burnDisc:disc force:YES];
+  }
+  CFRelease((__bridge CFTypeRef)disc);
+}
+
+- (void)_burnDisc:(MP3Disc*)disc force:(BOOL)force {
+  NSDictionary* deviceStatus = [[disc.burn device] status];
+  uint64_t availableFreeSectors = [[[deviceStatus valueForKey:DRDeviceMediaInfoKey] valueForKey:DRDeviceMediaFreeSpaceKey] longLongValue];
+  while (1) {
+    DRFolder* rootFolder = [DRFolder virtualFolderWithName:disc.name];
     NSUInteger index = 0;
-    for (Track* track in playlist.tracks) {
-      if (track.transcodedPath) {
-        DRFile* file = [DRFile fileWithPath:track.transcodedPath];
-        [file setBaseName:[NSString stringWithFormat:@"%03lu - %@.mp3", (unsigned long)++index, track.title]];
-        [rootFolder addChild:file];
-      }
+    for (Track* track in disc.tracks) {
+      DRFile* file = [DRFile fileWithPath:track.transcodedPath];
+      [file setBaseName:[NSString stringWithFormat:@"%03lu - %@.mp3", (unsigned long)++index, track.title]];
+      [rootFolder addChild:file];
     }
     DRTrack* track = [DRTrack trackForRootFolder:rootFolder];
-    
-    DRBurn* burn = [(DRBurnSetupPanel*)panel burnObject];
-    NSDictionary* deviceStatus = [[burn device] status];
-    uint64_t availableFreeSectors = [[[deviceStatus valueForKey:DRDeviceMediaInfoKey] valueForKey:DRDeviceMediaFreeSpaceKey] longLongValue];
     uint64_t trackLengthInSectors = [track estimateLength];
     if (trackLengthInSectors < availableFreeSectors) {
       DRBurnProgressPanel* progressPanel = [DRBurnProgressPanel progressPanel];
-      [progressPanel beginProgressSheetForBurn:burn layout:track modalForWindow:_mainWindow];
+      [progressPanel beginProgressSheetForBurn:disc.burn layout:track modalForWindow:_mainWindow];
+      break;
+    }
+    if (force) {
+      [disc.tracks removeLastObject];
+      if (disc.tracks.count == 0) {
+        break;  // Should never happen
+      }
     } else {
       NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_SPACE_TITLE", nil)
                                        defaultButton:NSLocalizedString(@"ALERT_SPACE_DEFAULT_BUTTON", nil)
-                                     alternateButton:nil
+                                     alternateButton:NSLocalizedString(@"ALERT_SPACE_ALTERNATE_BUTTON", nil)
                                          otherButton:nil
-                           informativeTextWithFormat:NSLocalizedString(@"ALERT_SPACE_MESSAGE", nil), (int)(trackLengthInSectors * 2048 / (1000 * 1000)), (int)(availableFreeSectors * 2048 / (1000 * 1000))];  // Display MB not MiB like in Finder
+                           informativeTextWithFormat:NSLocalizedString(@"ALERT_SPACE_MESSAGE", nil), (int)(trackLengthInSectors * kSectorSize / (1000 * 1000)), (int)(availableFreeSectors * kSectorSize / (1000 * 1000))];  // Display MB not MiB like in Finder
       alert.alertStyle = NSCriticalAlertStyle;
-      [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+      [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_spaceAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
+      break;
     }
   }
-  CFRelease((__bridge CFTypeRef)playlist);
 }
 
-- (void)_burnPlaylist:(Playlist*)playlist {
+- (void)_burnSetupPanelDidEnd:(DRSetupPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
+  MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
+  if (returnCode == NSOKButton) {
+    disc.burn = [(DRBurnSetupPanel*)panel burnObject];
+    [panel orderOut:nil];
+    [self _burnDisc:disc force:NO];
+  }
+  CFRelease((__bridge CFTypeRef)disc);
+}
+
+- (void)_prepareDisc:(MP3Disc*)disc {
   DRBurnSetupPanel* setupPanel = [DRBurnSetupPanel setupPanel];
+#ifndef NDEBUG
   [setupPanel setCanSelectTestBurn:YES];
-  [setupPanel beginSetupSheetForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_burnSetupPanelDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(playlist)];
+#endif
+  [setupPanel beginSetupSheetForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_burnSetupPanelDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
 }
 
 - (void)_missingAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
-  Playlist* playlist = (__bridge Playlist*)contextInfo;
+  MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSOKButton) {
     [alert.window orderOut:nil];
-    [self _burnPlaylist:playlist];
+    [self _prepareDisc:disc];
   }
-  CFRelease((__bridge CFTypeRef)playlist);
+  CFRelease((__bridge CFTypeRef)disc);
 }
 
-- (void)_transcodePlaylist:(Playlist*)playlist {
+- (void)_prepareDiscWithName:(NSString*)name tracks:(NSArray*)tracks {
+  _cancelled = NO;
   BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
   self.transcoding = YES;
-  _cancelled = NO;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     @autoreleasepool {
-      NSMutableSet* transcodedTracks = [NSMutableSet set];
-      for (Track* track in playlist.tracks) {
+      NSMutableSet* processedTracks = [NSMutableSet set];
+      for (Track* track in tracks) {
         if (_cancelled) {
           break;
         }
-        if (!track.transcodedPath && ![transcodedTracks containsObject:track]) {
-          [transcodedTracks addObject:track];
+        if (!track.transcodedPath && ![processedTracks containsObject:track]) {
+          [processedTracks addObject:track];
           dispatch_semaphore_wait(_transcodingSemaphore, DISPATCH_TIME_FOREVER);
           dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
             @autoreleasepool {
@@ -240,14 +271,13 @@
       dispatch_async(dispatch_get_main_queue(), ^{
         self.transcoding = NO;
         if (_cancelled == NO) {
-          NSUInteger totalCount = playlist.tracks.count;
-          NSUInteger transcodedCount = 0;
-          for (Track* track in playlist.tracks) {
+          NSMutableArray* transcodedTracks = [NSMutableArray array];
+          for (Track* track in tracks) {
             if (track.transcodedPath) {
-              ++transcodedCount;
+              [transcodedTracks addObject:track];
             }
           }
-          if (transcodedCount == 0) {
+          if (transcodedTracks.count == 0) {
             NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_EMPTY_TITLE", nil)
                                              defaultButton:NSLocalizedString(@"ALERT_EMPTY_DEFAULT_BUTTON", nil)
                                            alternateButton:nil
@@ -255,15 +285,20 @@
                                  informativeTextWithFormat:NSLocalizedString(@"ALERT_EMPTY_MESSAGE", nil)];
             alert.alertStyle = NSCriticalAlertStyle;
             [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
-          } else if (transcodedCount < totalCount) {
-            NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_MISSING_TITLE", nil)
-                                             defaultButton:NSLocalizedString(@"ALERT_MISSING_DEFAULT_BUTTON", nil)
-                                           alternateButton:NSLocalizedString(@"ALERT_MISSING_ALTERNATE_BUTTON", nil)
-                                               otherButton:nil
-                                 informativeTextWithFormat:NSLocalizedString(@"ALERT_MISSING_MESSAGE", nil), (int)(totalCount - transcodedCount), (int)totalCount];
-            [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_missingAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(playlist)];
           } else {
-            [self _burnPlaylist:playlist];
+            MP3Disc* disc = [[MP3Disc alloc] init];
+            disc.name = name;
+            disc.tracks = transcodedTracks;
+            if (transcodedTracks.count < tracks.count) {
+              NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_MISSING_TITLE", nil)
+                                               defaultButton:NSLocalizedString(@"ALERT_MISSING_DEFAULT_BUTTON", nil)
+                                             alternateButton:NSLocalizedString(@"ALERT_MISSING_ALTERNATE_BUTTON", nil)
+                                                 otherButton:nil
+                                   informativeTextWithFormat:NSLocalizedString(@"ALERT_MISSING_MESSAGE", nil), (int)(tracks.count - transcodedTracks.count), (int)tracks.count];
+              [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_missingAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
+            } else {
+              [self _prepareDisc:disc];
+            }
           }
         }
       });
@@ -273,7 +308,7 @@
 
 - (IBAction)make:(id)sender {
   Playlist* playlist = [_arrayController.selectedObjects firstObject];
-  [self _transcodePlaylist:playlist];
+  [self _prepareDiscWithName:playlist.name tracks:playlist.tracks];
 }
 
 - (IBAction)cancelTranscoding:(id)sender {
