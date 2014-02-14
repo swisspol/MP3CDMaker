@@ -19,7 +19,19 @@
 "ALERT_SPACE_TITLE" = "Are you sure you want to burn the MP3 CD?";
 "ALERT_SPACE_DEFAULT_BUTTON" = "Burn";
 "ALERT_SPACE_ALTERNATE_BUTTON" = "Don't Burn";
-"ALERT_SPACE_MESSAGE" = "There is not enough space on the disc (%@ MB required for %@ MB available): one or more songs at the end of the playlist will be missing from the MP3 CD.";
+"ALERT_SPACE_MESSAGE" = "There is not enough space on this disc to fit all the songs from the playlist (%@ MB required for %@ MB available).\n\nAfter this MP3 CD is burned, you will be prompted for more discs to continue burning the entire playlist.";
+
+"ALERT_FAILURE_TITLE" = "MP3 CD failed burning!";
+"ALERT_FAILURE_DEFAULT_BUTTON" = "Try Again";
+"ALERT_FAILURE_ALTERNATE_BUTTON" = "Stop";
+
+"ALERT_CONTINUE_TITLE" = "Do you want to burn the next MP3 CD?";
+"ALERT_CONTINUE_DEFAULT_BUTTON" = "Burn Next CD";
+"ALERT_CONTINUE_ALTERNATE_BUTTON" = "Stop";
+"ALERT_CONTINUE_MESSAGE" = "There are %i songs from the playlist left to burn.";
+
+"ALERT_SUCCESS_TITLE" = "MP3 CD burned successfully!";
+"ALERT_SUCCESS_DEFAULT_BUTTON" = "Done";
 
 "TOOLTIP_ERROR" = "%@ (%@)";
 

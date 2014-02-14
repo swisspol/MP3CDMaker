@@ -15,6 +15,7 @@
 
 #import <DiscRecording/DiscRecording.h>
 #import <DiscRecordingUI/DiscRecordingUI.h>
+#import <objc/runtime.h>
 #import <sys/sysctl.h>
 #import <sys/stat.h>
 
@@ -34,6 +35,8 @@
 @interface AppDelegate ()
 @property(nonatomic, getter = isCancelled) BOOL cancelled;
 @end
+
+static const char _associatedKey;
 
 static NSUInteger _GetFileSize(NSString* path) {
   struct stat info;
@@ -203,9 +206,58 @@ static NSUInteger _GetFileSize(NSString* path) {
   [_tableView reloadData];  // TODO: Works around NSTableView not refreshing properly depending on scrolling position
 }
 
+- (void)_continueAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
+  if (returnCode == NSOKButton) {
+    [alert.window orderOut:nil];
+    [self _prepareDisc:disc];
+  }
+  CFRelease((__bridge CFTypeRef)disc);
+}
+
+- (void)_finishDisc:(MP3Disc*)disc {
+  NSDictionary* status = [disc.burn status];
+  if ([[status objectForKey:DRStatusStateKey] isEqualToString:DRStatusStateFailed]) {
+    NSDictionary* error = [status objectForKey:DRErrorStatusKey];
+    if ([[error objectForKey:DRErrorStatusErrorKey] unsignedIntValue] != (unsigned int)kDRUserCanceledErr) {
+      NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_FAILURE_TITLE", nil)
+                                       defaultButton:NSLocalizedString(@"ALERT_FAILURE_DEFAULT_BUTTON", nil)
+                                     alternateButton:NSLocalizedString(@"ALERT_FAILURE_ALTERNATE_BUTTON", nil)
+                                         otherButton:nil
+                           informativeTextWithFormat:@"%@", [error objectForKey:DRErrorStatusErrorStringKey]];
+      [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_continueAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
+    }
+  } else {
+    disc.trackRange = NSMakeRange(disc.trackRange.location + disc.trackRange.length, disc.tracks.count - (disc.trackRange.location + disc.trackRange.length));
+    if (disc.trackRange.length > 0) {
+      NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_CONTINUE_TITLE", nil)
+                                       defaultButton:NSLocalizedString(@"ALERT_CONTINUE_DEFAULT_BUTTON", nil)
+                                     alternateButton:NSLocalizedString(@"ALERT_CONTINUE_ALTERNATE_BUTTON", nil)
+                                         otherButton:nil
+                           informativeTextWithFormat:NSLocalizedString(@"ALERT_CONTINUE_MESSAGE", nil), (int)disc.trackRange.length];
+      [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_continueAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
+    } else {
+      NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_SUCCESS_TITLE", nil)
+                                       defaultButton:NSLocalizedString(@"ALERT_SUCCESS_DEFAULT_BUTTON", nil)
+                                     alternateButton:nil
+                                         otherButton:nil
+                           informativeTextWithFormat:@""];
+      [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+    }
+  }
+}
+
+- (BOOL)burnProgressPanel:(DRBurnProgressPanel*)progressPanel burnDidFinish:(DRBurn*)burn {
+  MP3Disc* disc = objc_getAssociatedObject(progressPanel, &_associatedKey);
+  [self performSelector:@selector(_finishDisc:) withObject:disc afterDelay:0.0];
+  objc_setAssociatedObject(progressPanel, &_associatedKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+  return YES;
+}
+
 - (void)_spaceAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSOKButton) {
+    [alert.window orderOut:nil];
     [self _burnDisc:disc force:YES];
   }
   CFRelease((__bridge CFTypeRef)disc);
@@ -235,8 +287,13 @@ static NSUInteger _GetFileSize(NSString* path) {
     DRTrack* track = [DRTrack trackForRootFolder:rootFolder];
     uint64_t trackLengthInSectors = [track estimateLength];
     if (trackLengthInSectors < availableFreeSectors) {
+#ifndef NDEBUG
+      NSLog(@"Burning tracks %lu-%lu out of %lu from playlist \"%@\"", disc.trackRange.location + 1, disc.trackRange.location + disc.trackRange.length, disc.tracks.count, disc.name);
+#endif
       DRBurnProgressPanel* progressPanel = [DRBurnProgressPanel progressPanel];
+      progressPanel.delegate = self;
       [progressPanel beginProgressSheetForBurn:disc.burn layout:track modalForWindow:_mainWindow];
+      objc_setAssociatedObject(progressPanel, &_associatedKey, disc, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
       break;
     }
     if (force) {
@@ -264,9 +321,9 @@ static NSUInteger _GetFileSize(NSString* path) {
 - (void)_burnSetupPanelDidEnd:(DRSetupPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSOKButton) {
-    disc.burn = [(DRBurnSetupPanel*)panel burnObject];
     [panel orderOut:nil];
-    [self _burnDisc:disc force:NO];
+    disc.burn = [(DRBurnSetupPanel*)panel burnObject];
+    [self _burnDisc:disc force:(disc.trackRange.location > 0 ? YES : NO)];
   }
   CFRelease((__bridge CFTypeRef)disc);
 }
