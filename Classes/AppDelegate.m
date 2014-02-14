@@ -173,6 +173,7 @@
       track.transcodingError = nil;
     }
   }
+  [_tableView reloadData];  // TODO: Works around NSTableView not refreshing properly depending on scrolling position
 }
 
 - (IBAction)updateSkip:(id)sender {
@@ -187,6 +188,7 @@
       }
     }
   }
+  [_tableView reloadData];  // TODO: Works around NSTableView not refreshing properly depending on scrolling position
 }
 
 - (void)_spaceAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
@@ -274,6 +276,7 @@
         track.transcodingError = nil;
       }
     }
+    [_tableView reloadData];  // TODO: Works around NSTableView not refreshing properly depending on scrolling position
   }
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     @autoreleasepool {

@@ -144,6 +144,7 @@
                 <outlet property="arrayController" destination="jPY-2w-sy6" id="GgG-UK-Too"/>
                 <outlet property="infoTextField" destination="Ge0-B4-9As" id="I2n-5i-0hX"/>
                 <outlet property="mainWindow" destination="1604" id="1606"/>
+                <outlet property="tableView" destination="I5S-UQ-Rx8" id="dxX-yZ-kfq"/>
             </connections>
         </customObject>
         <window title="MP3 CD Maker" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" oneShot="NO" showsToolbarButton="NO" visibleAtLaunch="NO" frameAutosaveName="mainWindow" animationBehavior="default" id="1604" userLabel="Main Window">
