@@ -9,12 +9,12 @@
 
 "ALERT_EMPTY_TITLE" = "Cannot burn MP3 CD!";
 "ALERT_EMPTY_DEFAULT_BUTTON" = "OK";
-"ALERT_EMPTY_MESSAGE" = "All songs in the playlist fail to convert to MP3 format.";
+"ALERT_EMPTY_MESSAGE" = "All songs in the playlist failed to convert to MP3 format.";
 
 "ALERT_MISSING_TITLE" = "Are you sure you want to burn the MP3 CD?";
 "ALERT_MISSING_DEFAULT_BUTTON" = "Burn";
 "ALERT_MISSING_ALTERNATE_BUTTON" = "Don't Burn";
-"ALERT_MISSING_MESSAGE" = "%i songs out of %i in the playlist fail to convert to MP3 format and will be missing from the MP3 CD.";
+"ALERT_MISSING_MESSAGE" = "%i songs out of %i in the playlist failed to convert to MP3 format and will be missing from the MP3 CD.";
 
 "ALERT_SPACE_TITLE" = "Cannot burn MP3 CD!";
 "ALERT_SPACE_DEFAULT_BUTTON" = "OK";
