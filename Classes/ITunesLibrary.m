@@ -88,6 +88,7 @@ static TrackKind _TrackKindFromString(NSString* string) {
             track.artist = libraryItem.artist.name;
             track.duration = (NSTimeInterval)libraryItem.totalTime / 1000.0;
             track.kind = kind;
+            track.size = libraryItem.size;
             [cache setObject:track forKey:persistentID];
           }
           [tracks addObject:track];
@@ -143,6 +144,7 @@ static TrackKind _TrackKindFromString(NSString* string) {
               track.artist = [plistTrack objectForKey:@"Artist"];
               track.duration = (NSTimeInterval)[[plistTrack objectForKey:@"Total Time"] integerValue] / 1000.0;
               track.kind = kind;
+              track.size = [[plistTrack objectForKey:@"Size"] integerValue];
               [cache setObject:track forKey:persistentID];
             }
             [tracks addObject:track];

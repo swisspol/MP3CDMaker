@@ -36,6 +36,7 @@ typedef enum {
 @property(nonatomic, copy) NSString* artist;
 @property(nonatomic) NSTimeInterval duration;
 @property(nonatomic) TrackKind kind;
+@property(nonatomic) NSUInteger size;
 @end
 
 @interface Track ()

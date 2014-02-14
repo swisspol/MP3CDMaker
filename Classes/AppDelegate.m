@@ -40,7 +40,8 @@
 
 + (void)initialize {
   NSDictionary* defaults = @{
-    kUserDefaultKey_BitRate: [NSNumber numberWithInteger:kBitRate_165Kbps_VBR]
+    kUserDefaultKey_BitRate: [NSNumber numberWithInteger:kBitRate_165Kbps_VBR],
+    kUserDefaultKey_SkipMPEG: @NO
   };
   [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
 }
@@ -69,16 +70,22 @@
 }
 
 - (void)_updateInfo {
+  BOOL skipMPEG = [[NSUserDefaults standardUserDefaults] boolForKey:kUserDefaultKey_SkipMPEG];
+  NSUInteger bitRate = KBitsPerSecondFromBitRate([[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate], true);
   NSTimeInterval duration = 0.0;
+  NSUInteger size = 0;
   Playlist* playlist = [_arrayController.selectedObjects firstObject];
   for (Track* track in playlist.tracks) {
     duration += track.duration;
+    if (skipMPEG && (track.kind == kTrackKind_MPEG)) {
+      size += track.size;
+    } else {
+      size += track.duration * (NSTimeInterval)bitRate * 1000.0 / 8.0;
+    }
   }
   NSUInteger hours = duration / 3600.0;
   NSUInteger minutes = fmod(duration, 3600.0) / 60.0;
   NSUInteger seconds = fmod(fmod(duration, 3600.0), 60.0);
-  BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
-  NSUInteger size = duration * (NSTimeInterval)KBitsPerSecondFromBitRate(bitRate, true) * 1000.0 / 8.0;
   NSString* countString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:playlist.tracks.count]];
   NSString* sizeString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(size / (1000 * 1000))]];  // Display MB not MiB like in Finder
   [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, (int)hours, (int)minutes, (int)seconds, sizeString]];
@@ -168,6 +175,20 @@
   }
 }
 
+- (IBAction)updateSkip:(id)sender {
+  [self _updateInfo];
+  
+  for (Playlist* playlist in _arrayController.arrangedObjects) {
+    for (Track* track in playlist.tracks) {
+      if (track.kind == kTrackKind_MPEG) {
+        track.level = 0.0;
+        track.transcodedPath = nil;  // TODO: This will (temporarily) leak the transcoded file
+        track.transcodingError = nil;
+      }
+    }
+  }
+}
+
 - (void)_spaceAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSOKButton) {
@@ -200,11 +221,13 @@
         break;  // Should never happen
       }
     } else {
+      NSString* trackString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(trackLengthInSectors * kSectorSize / (1000 * 1000))]];  // Display MB not MiB like in Finder
+      NSString* availableString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(availableFreeSectors * kSectorSize / (1000 * 1000))]];  // Display MB not MiB like in Finder
       NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_SPACE_TITLE", nil)
                                        defaultButton:NSLocalizedString(@"ALERT_SPACE_DEFAULT_BUTTON", nil)
                                      alternateButton:NSLocalizedString(@"ALERT_SPACE_ALTERNATE_BUTTON", nil)
                                          otherButton:nil
-                           informativeTextWithFormat:NSLocalizedString(@"ALERT_SPACE_MESSAGE", nil), (int)(trackLengthInSectors * kSectorSize / (1000 * 1000)), (int)(availableFreeSectors * kSectorSize / (1000 * 1000))];  // Display MB not MiB like in Finder
+                           informativeTextWithFormat:NSLocalizedString(@"ALERT_SPACE_MESSAGE", nil), trackString, availableString];
       alert.alertStyle = NSCriticalAlertStyle;
       [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_spaceAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
       break;
@@ -242,6 +265,7 @@
 - (void)_prepareDiscWithName:(NSString*)name tracks:(NSArray*)tracks {
   _cancelled = NO;
   BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
+  BOOL skipMPEG = [[NSUserDefaults standardUserDefaults] boolForKey:kUserDefaultKey_SkipMPEG];
   self.transcoding = YES;
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
     @autoreleasepool {
@@ -252,35 +276,43 @@
         }
         if (!track.transcodedPath && ![processedTracks containsObject:track]) {
           [processedTracks addObject:track];
-          dispatch_semaphore_wait(_transcodingSemaphore, DISPATCH_TIME_FOREVER);
-          dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-            @autoreleasepool {
-              NSString* inPath = [track.location path];
-              NSString* outPath = [_cachePath stringByAppendingPathComponent:[[[NSProcessInfo processInfo] globallyUniqueString] stringByAppendingPathExtension:@"mp3"]];
-              NSError* error = nil;
-              BOOL success = [MP3Transcoder transcodeAudioFileAtPath:inPath
-                                                              toPath:outPath
-                                                         withBitRate:bitRate
-                                                               error:&error
-                                                       progressBlock:^(float progress, BOOL* stop) {
+          if (skipMPEG && (track.kind == kTrackKind_MPEG)) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+              track.level = 100.0;
+              track.transcodedPath = [track.location path];
+              track.transcodingError = nil;
+            });
+          } else {
+            dispatch_semaphore_wait(_transcodingSemaphore, DISPATCH_TIME_FOREVER);
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+              @autoreleasepool {
+                NSString* inPath = [track.location path];
+                NSString* outPath = [_cachePath stringByAppendingPathComponent:[[[NSProcessInfo processInfo] globallyUniqueString] stringByAppendingPathExtension:@"mp3"]];
+                NSError* error = nil;
+                BOOL success = [MP3Transcoder transcodeAudioFileAtPath:inPath
+                                                                toPath:outPath
+                                                           withBitRate:bitRate
+                                                                 error:&error
+                                                         progressBlock:^(float progress, BOOL* stop) {
+                  dispatch_async(dispatch_get_main_queue(), ^{
+                    track.level = 100.0 * progress;
+                  });
+                  *stop = _cancelled;
+                }];
                 dispatch_async(dispatch_get_main_queue(), ^{
-                  track.level = 100.0 * progress;
+                  if (success) {
+                    track.level = 100.0;
+                    track.transcodedPath = outPath;
+                    track.transcodingError = nil;
+                  } else {
+                    track.level = 0.0;
+                    track.transcodingError = error;
+                  }
                 });
-                *stop = _cancelled;
-              }];
-              dispatch_async(dispatch_get_main_queue(), ^{
-                if (success) {
-                  track.level = 100.0;
-                  track.transcodedPath = outPath;
-                  track.transcodingError = nil;
-                } else {
-                  track.level = 0.0;
-                  track.transcodingError = error;
-                }
-              });
-            }
-            dispatch_semaphore_signal(_transcodingSemaphore);
-          });
+              }
+              dispatch_semaphore_signal(_transcodingSemaphore);
+            });
+          }
         }
       }
       for (NSUInteger i = 0; i < _transcoders; ++i) {

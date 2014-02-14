@@ -16,6 +16,7 @@
 #import <AppKit/AppKit.h>
 
 #define kUserDefaultKey_BitRate @"bitRate"
+#define kUserDefaultKey_SkipMPEG @"skipMPEG"
 
 @interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource> {
   NSString* _cachePath;
@@ -32,6 +33,7 @@
 @interface AppDelegate (Actions)
 - (IBAction)updatePlaylist:(id)sender;
 - (IBAction)updateQuality:(id)sender;
+- (IBAction)updateSkip:(id)sender;
 - (IBAction)make:(id)sender;
 - (IBAction)cancelTranscoding:(id)sender;
 @end
