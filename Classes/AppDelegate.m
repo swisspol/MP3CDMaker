@@ -101,7 +101,8 @@ static NSUInteger _GetFileSize(NSString* path) {
   NSUInteger seconds = fmod(fmod(duration, 3600.0), 60.0);
   NSString* countString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:playlist.tracks.count]];
   NSString* sizeString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(size / (1000 * 1000))]];  // Display MB not MiB like in Finder
-  [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, (int)hours, (int)minutes, (int)seconds, sizeString]];
+  NSString* timeString = hours > 0 ? [NSString stringWithFormat:@"%lu:%02lu:%02lu", hours, minutes, seconds] : [NSString stringWithFormat:@"%lu:%02lu", minutes, seconds];
+  [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, timeString, sizeString]];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {

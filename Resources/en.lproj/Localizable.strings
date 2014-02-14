@@ -35,4 +35,4 @@
 
 "TOOLTIP_ERROR" = "%@ (%@)";
 
-"PLAYLIST_INFO" = "%@ songs for %i:%i:%i total time (%@ MB estimated MP3 CD size)";
+"PLAYLIST_INFO" = "%@ songs for %@ total time (%@ MB estimated MP3 CD size)";
