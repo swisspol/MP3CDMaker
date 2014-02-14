@@ -7,7 +7,7 @@ Overview
 
 **Convert iTunes playlists into MP3 CDs in one click — it works even with playlists containing songs not in MP3 format!**
 
-Select a music playlist from your iTunes library, then all its songs will be automatically converted to MP3 format in the desired quality and burned to a CD. It works with most audio files in your iTunes library and does not require manipulating your iTunes library or playlists in any way.
+Select a music playlist from your iTunes library, then its songs will be automatically converted to MP3 format in the desired quality and burned to a CD. It works with most audio files in your iTunes library and does not require manipulating your iTunes library or playlists in any way.
 
 License
 =======
