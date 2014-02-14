@@ -45,11 +45,15 @@
   [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
 }
 
+- (void)_clearCache {
+  [[NSFileManager defaultManager] removeItemAtPath:_cachePath error:NULL];
+  [[NSFileManager defaultManager] createDirectoryAtPath:_cachePath withIntermediateDirectories:YES attributes:nil error:NULL];
+}
+
 - (id)init {
   if ((self = [super init])) {
     _cachePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"Transcoded"];
-    [[NSFileManager defaultManager] removeItemAtPath:_cachePath error:NULL];
-    [[NSFileManager defaultManager] createDirectoryAtPath:_cachePath withIntermediateDirectories:YES attributes:nil error:NULL];
+    [self _clearCache];
     
     uint32_t cores;
     size_t length = sizeof(cores);
@@ -64,12 +68,28 @@
   return self;
 }
 
+- (void)_updateInfo {
+  NSTimeInterval duration = 0.0;
+  Playlist* playlist = [_arrayController.selectedObjects firstObject];
+  for (Track* track in playlist.tracks) {
+    duration += track.duration;
+  }
+  NSUInteger hours = duration / 3600.0;
+  NSUInteger minutes = fmod(duration, 3600.0) / 60.0;
+  NSUInteger seconds = fmod(fmod(duration, 3600.0), 60.0);
+  BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
+  NSUInteger size = duration * (NSTimeInterval)KBitsPerSecondFromBitRate(bitRate, true) * 1000.0 / 8.0;
+  NSString* countString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:playlist.tracks.count]];
+  NSString* sizeString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(size / (1000 * 1000))]];  // Display MB not MiB like in Finder
+  [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, (int)hours, (int)minutes, (int)seconds, sizeString]];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
   NSError* error = nil;
   NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
   if (playlists) {
     [_arrayController setContent:playlists];
-    [self updateInfo:nil];
+    [self _updateInfo];
     [_mainWindow makeKeyAndOrderFront:nil];
   } else {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_FATAL_TITLE", nil)
@@ -100,7 +120,7 @@
 }
 
 - (void)applicationWillTerminate:(NSNotification*)notification {
-  [[NSFileManager defaultManager] removeItemAtPath:_cachePath error:NULL];
+  [self _clearCache];
 }
 
 - (BOOL)windowShouldClose:(id)sender {
@@ -131,20 +151,21 @@
 
 @implementation AppDelegate (Actions)
 
-- (IBAction)updateInfo:(id)sender {
-  NSTimeInterval duration = 0.0;
-  Playlist* playlist = [_arrayController.selectedObjects firstObject];
-  for (Track* track in playlist.tracks) {
-    duration += track.duration;
+- (IBAction)updatePlaylist:(id)sender {
+  [self _updateInfo];
+}
+
+- (IBAction)updateQuality:(id)sender {
+  [self _updateInfo];
+  
+  [self _clearCache];
+  for (Playlist* playlist in _arrayController.arrangedObjects) {
+    for (Track* track in playlist.tracks) {
+      track.level = 0.0;
+      track.transcodedPath = nil;
+      track.transcodingError = nil;
+    }
   }
-  NSUInteger hours = duration / 3600.0;
-  NSUInteger minutes = fmod(duration, 3600.0) / 60.0;
-  NSUInteger seconds = fmod(fmod(duration, 3600.0), 60.0);
-  BitRate bitRate = [[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate];
-  NSUInteger size = duration * (NSTimeInterval)KBitsPerSecondFromBitRate(bitRate, true) * 1000.0 / 8.0;
-  NSString* countString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:playlist.tracks.count]];
-  NSString* sizeString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(size / (1000 * 1000))]];  // Display MB not MiB like in Finder
-  [_infoTextField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"PLAYLIST_INFO", nil), countString, (int)hours, (int)minutes, (int)seconds, sizeString]];
 }
 
 - (void)_spaceAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {

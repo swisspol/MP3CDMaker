@@ -352,7 +352,7 @@
                             </menu>
                         </popUpButtonCell>
                         <connections>
-                            <action selector="updateInfo:" target="494" id="V4S-LL-FH5"/>
+                            <action selector="updatePlaylist:" target="494" id="nHU-SC-qUh"/>
                             <binding destination="jPY-2w-sy6" name="content" keyPath="arrangedObjects" id="6o7-V2-DjX"/>
                             <binding destination="jPY-2w-sy6" name="contentValues" keyPath="arrangedObjects.name" previousBinding="6o7-V2-DjX" id="MLm-m8-0Be"/>
                             <binding destination="jPY-2w-sy6" name="selectedIndex" keyPath="selectionIndex" previousBinding="MLm-m8-0Be" id="AbC-6Y-TQ2">
@@ -444,7 +444,7 @@ DQ
                             </menu>
                         </popUpButtonCell>
                         <connections>
-                            <action selector="updateInfo:" target="494" id="Hhz-M9-qil"/>
+                            <action selector="updateQuality:" target="494" id="F63-gp-wra"/>
                             <binding destination="494" name="enabled" keyPath="transcoding" id="FJu-y7-lkO">
                                 <dictionary key="options">
                                     <string key="NSValueTransformerName">NSNegateBoolean</string>

@@ -30,7 +30,8 @@
 @end
 
 @interface AppDelegate (Actions)
-- (IBAction)updateInfo:(id)sender;
+- (IBAction)updatePlaylist:(id)sender;
+- (IBAction)updateQuality:(id)sender;
 - (IBAction)make:(id)sender;
 - (IBAction)cancelTranscoding:(id)sender;
 @end
