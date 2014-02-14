@@ -26,7 +26,8 @@
 
 @interface MP3Disc : NSObject
 @property(nonatomic, retain) NSString* name;
-@property(nonatomic, retain) NSMutableArray* tracks;
+@property(nonatomic, retain) NSArray* tracks;
+@property(nonatomic) NSRange trackRange;
 @property(nonatomic, retain) DRBurn* burn;
 @end
 
@@ -218,14 +219,14 @@ static NSUInteger _GetFileSize(NSString* path) {
     DRFolder* rootFolder = [DRFolder virtualFolderWithName:disc.name];
     uint64_t estimatedTrackLengthInBytes = 0;
     NSUInteger index = 0;
-    for (Track* track in disc.tracks) {
+    for (Track* track in [disc.tracks subarrayWithRange:disc.trackRange]) {
       DRFile* file = [DRFile fileWithPath:track.transcodedPath];
       [file setBaseName:[NSString stringWithFormat:@"%03lu - %@.mp3", index + 1, track.title]];
       [rootFolder addChild:file];
       if (force) {
         estimatedTrackLengthInBytes += track.transcodedSize;
         if (estimatedTrackLengthInBytes >= availableFreeBytes) {
-          [disc.tracks removeObjectsInRange:NSMakeRange(index, disc.tracks.count - index)];
+          disc.trackRange = NSMakeRange(disc.trackRange.location, index - disc.trackRange.location);
           break;
         }
       }
@@ -239,8 +240,10 @@ static NSUInteger _GetFileSize(NSString* path) {
       break;
     }
     if (force) {
-      [disc.tracks removeLastObject];
-      if (disc.tracks.count == 0) {
+      NSUInteger length = disc.trackRange.length;
+      if (length > 0) {
+        disc.trackRange = NSMakeRange(disc.trackRange.location, length - 1);
+      } else {
         break;  // Should never happen
       }
     } else {
@@ -368,6 +371,7 @@ static NSUInteger _GetFileSize(NSString* path) {
             MP3Disc* disc = [[MP3Disc alloc] init];
             disc.name = name;
             disc.tracks = transcodedTracks;
+            disc.trackRange = NSMakeRange(0, transcodedTracks.count);
             if (transcodedTracks.count < tracks.count) {
               NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_MISSING_TITLE", nil)
                                                defaultButton:NSLocalizedString(@"ALERT_MISSING_DEFAULT_BUTTON", nil)
