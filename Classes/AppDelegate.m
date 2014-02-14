@@ -276,9 +276,16 @@ static NSUInteger _GetFileSize(NSString* path) {
     DRFolder* rootFolder = [DRFolder virtualFolderWithName:disc.name];
     uint64_t estimatedTrackLengthInBytes = 0;
     NSUInteger index = 0;
+    NSUInteger count = disc.trackRange.length;
     for (Track* track in [disc.tracks subarrayWithRange:disc.trackRange]) {
       DRFile* file = [DRFile fileWithPath:track.transcodedPath];
-      [file setBaseName:[NSString stringWithFormat:@"%03lu - %@.mp3", index + 1, track.title]];
+      if (count >= 100) {
+        [file setBaseName:[NSString stringWithFormat:@"%03lu - %@.mp3", index + 1, track.title]];
+      } else if (count >= 10) {
+        [file setBaseName:[NSString stringWithFormat:@"%02lu - %@.mp3", index + 1, track.title]];
+      } else {
+        [file setBaseName:[NSString stringWithFormat:@"%lu - %@.mp3", index + 1, track.title]];
+      }
       [rootFolder addChild:file];
       if (force) {
         estimatedTrackLengthInBytes += track.transcodedSize;
@@ -294,6 +301,9 @@ static NSUInteger _GetFileSize(NSString* path) {
     if (trackLengthInSectors < availableFreeSectors) {
 #ifndef NDEBUG
       NSLog(@"Burning tracks %lu-%lu out of %lu from playlist \"%@\"", disc.trackRange.location + 1, disc.trackRange.location + disc.trackRange.length, disc.tracks.count, disc.name);
+      for (DRFile* file in rootFolder.children) {
+        NSLog(@"  %@", file.baseName);
+      }
 #endif
       DRBurnProgressPanel* progressPanel = [DRBurnProgressPanel progressPanel];
       progressPanel.delegate = self;
