@@ -115,11 +115,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
   NSError* error = nil;
   NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
-  if (playlists) {
-    [_playlistController setContent:playlists];
-    [self _updateInfo];
-    [_mainWindow makeKeyAndOrderFront:nil];
-  } else {
+  if (playlists == nil) {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_NO_LIBRARY_TITLE", nil)
                                      defaultButton:NSLocalizedString(@"ALERT_NO_LIBRARY_DEFAULT_BUTTON", nil)
                                    alternateButton:nil
@@ -128,7 +124,12 @@ static NSUInteger _GetFileSize(NSString* path) {
     [alert runModal];
     [NSApp terminate:nil];
   }
+  [_playlistController setContent:playlists];
+  [self _updateInfo];
+  
   [[InAppStore sharedStore] setDelegate:self];
+  
+  [_mainWindow makeKeyAndOrderFront:nil];
 }
 
 - (void)_quitAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
