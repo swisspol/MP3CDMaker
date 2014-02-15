@@ -133,7 +133,6 @@ static NSUInteger _GetFileSize(NSString* path) {
   
 #ifdef NDEBUG
   [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
-  [[Crashlytics sharedInstance] setDebugMode:YES];
 #endif
   
   [_mainWindow makeKeyAndOrderFront:nil];
