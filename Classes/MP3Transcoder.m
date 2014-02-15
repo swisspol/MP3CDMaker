@@ -90,7 +90,16 @@ static void _SetTranscoderErrorFromAVError(NSError** error, int code, NSString* 
   avfilter_register_all();
 }
 
-+ (BOOL)transcodeAudioFileAtPath:(NSString*)inPath
++ (MP3Transcoder*)sharedTranscoder {
+  static MP3Transcoder* transcoder = nil;
+  static dispatch_once_t token = 0;
+  dispatch_once(&token, ^{
+    transcoder = [[MP3Transcoder alloc] init];
+  });
+  return transcoder;
+}
+
+- (BOOL)transcodeAudioFileAtPath:(NSString*)inPath
                           toPath:(NSString*)outPath
                      withBitRate:(BitRate)bitRate
                            error:(NSError**)error

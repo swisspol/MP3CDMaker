@@ -445,11 +445,11 @@ static NSUInteger _GetFileSize(NSString* path) {
               NSString* inPath = [track.location path];
               NSString* outPath = [_cachePath stringByAppendingPathComponent:[[[NSProcessInfo processInfo] globallyUniqueString] stringByAppendingPathExtension:@"mp3"]];
               NSError* error = nil;
-              BOOL success = [MP3Transcoder transcodeAudioFileAtPath:inPath
-                                                              toPath:outPath
-                                                         withBitRate:bitRate
-                                                               error:&error
-                                                       progressBlock:^(float progress, BOOL* stop) {
+              BOOL success = [[MP3Transcoder sharedTranscoder] transcodeAudioFileAtPath:inPath
+                                                                                 toPath:outPath
+                                                                            withBitRate:bitRate
+                                                                                  error:&error
+                                                                          progressBlock:^(float progress, BOOL* stop) {
                 dispatch_async(dispatch_get_main_queue(), ^{
                   track.level = 100.0 * progress;
                 });
