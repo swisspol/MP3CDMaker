@@ -19,6 +19,8 @@
 #import <sys/sysctl.h>
 #import <sys/stat.h>
 
+#import <Crashlytics/Crashlytics.h>
+
 #import "AppDelegate.h"
 #import "ITunesLibrary.h"
 #import "MP3Transcoder.h"
@@ -128,6 +130,11 @@ static NSUInteger _GetFileSize(NSString* path) {
   [self _updateInfo];
   
   [[InAppStore sharedStore] setDelegate:self];
+  
+#ifdef NDEBUG
+  [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
+  [[Crashlytics sharedInstance] setDebugMode:YES];
+#endif
   
   [_mainWindow makeKeyAndOrderFront:nil];
 }
