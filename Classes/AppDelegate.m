@@ -27,7 +27,7 @@
 #define kUserDefaultKey_SkipMPEG @"skipMPEG"
 
 #define kLimitedModeMaxTracks 50
-#define kIAPProductIdentifier @"unlimited_tracks"
+#define kInAppProductIdentifier @"mp3_cd_maker_unlimited"
 
 #define kDiscSectorSize 2048
 
@@ -181,7 +181,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
   if ((menuItem.action == @selector(purchaseUnlimited:)) || (menuItem.action == @selector(restorePurchases:))) {
-    return ![[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kIAPProductIdentifier] && ![[InAppStore sharedStore] isBusy];
+    return ![[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kInAppProductIdentifier] && ![[InAppStore sharedStore] isBusy];
   }
   return YES;
 }
@@ -537,7 +537,7 @@ static NSUInteger _GetFileSize(NSString* path) {
   if (!tracks.count) {
     tracks = _trackController.arrangedObjects;
   }
-  if ((tracks.count <= kLimitedModeMaxTracks) || [[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kIAPProductIdentifier]) {
+  if ((tracks.count <= kLimitedModeMaxTracks) || [[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kInAppProductIdentifier]) {
     [self _burnTracks:tracks];
   } else {
     tracks = [tracks subarrayWithRange:NSMakeRange(0, kLimitedModeMaxTracks)];
@@ -555,7 +555,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (IBAction)purchaseUnlimited:(id)sender {
-  if (![[InAppStore sharedStore] purchaseProductWithIdentifier:kIAPProductIdentifier]) {
+  if (![[InAppStore sharedStore] purchaseProductWithIdentifier:kInAppProductIdentifier]) {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_UNAVAILABLE_TITLE", nil)
                                      defaultButton:NSLocalizedString(@"ALERT_UNAVAILABLE_DEFAULT_BUTTON", nil)
                                    alternateButton:nil
