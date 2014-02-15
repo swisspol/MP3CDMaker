@@ -118,6 +118,25 @@
                         </items>
                     </menu>
                 </menuItem>
+                <menuItem title="Store" id="dXM-7U-Tkl">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Store" systemMenu="font" id="WV1-yL-83x">
+                        <items>
+                            <menuItem title="Purchase Unlimited…" id="pHV-6H-PZQ">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="purchaseUnlimited:" target="494" id="Xg6-eg-TwA"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Restore Purchases…" tag="2" id="ybx-Dq-4mu">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="restorePurchases:" target="494" id="iQz-c8-aQN"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
                 <menuItem title="Window" id="1425">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Window" systemMenu="window" id="1426">
@@ -162,9 +181,6 @@
             <view key="contentView" id="1605">
                 <rect key="frame" x="0.0" y="0.0" width="1000" height="477"/>
                 <autoresizingMask key="autoresizingMask"/>
-                <userGuides>
-                    <userLayoutGuide location="20" affinity="minX"/>
-                </userGuides>
                 <subviews>
                     <scrollView autohidesScrollers="YES" horizontalLineScroll="16" horizontalPageScroll="10" verticalLineScroll="16" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="V1U-Cd-CRf">
                         <rect key="frame" x="20" y="75" width="960" height="346"/>
@@ -393,7 +409,7 @@ DQ
 </string>
                         </buttonCell>
                         <connections>
-                            <action selector="make:" target="494" id="0s3-SI-Spb"/>
+                            <action selector="burnDisc:" target="494" id="uM8-Gv-PZG"/>
                             <binding destination="ois-Es-bWL" name="enabled2" keyPath="arrangedObjects" previousBinding="si3-eC-Rsm" id="flA-QU-fpL">
                                 <dictionary key="options">
                                     <integer key="NSNullPlaceholder" value="-1"/>
@@ -547,5 +563,6 @@ DQ
             </connections>
         </arrayController>
         <userDefaultsController representsSharedInstance="YES" id="l3i-jC-gIX"/>
+        <customObject id="ylS-Cw-B7j" customClass="NSFontManager"/>
     </objects>
 </document>

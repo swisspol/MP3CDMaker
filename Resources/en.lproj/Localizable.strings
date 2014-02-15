@@ -1,6 +1,6 @@
-"ALERT_FATAL_TITLE" = "Can't load playlists from iTunes library!";
-"ALERT_FATAL_DEFAULT_BUTTON" = "Quit";
-"ALERT_FATAL_MESSAGE" = "%@\n\nMake sure your iTunes library is located at \"Music/iTunes\" in your home folder.";
+"ALERT_NO_LIBRARY_TITLE" = "Can't load playlists from iTunes library!";
+"ALERT_NO_LIBRARY_DEFAULT_BUTTON" = "Quit";
+"ALERT_NO_LIBRARY_MESSAGE" = "%@\n\nMake sure your iTunes library is located at \"Music/iTunes\" in your home folder.";
 
 "ALERT_QUIT_TITLE" = "Are you sure you want to quit?";
 "ALERT_QUIT_DEFAULT_BUTTON" = "Quit";
@@ -9,29 +9,51 @@
 
 "ALERT_EMPTY_TITLE" = "Cannot burn MP3 CD!";
 "ALERT_EMPTY_DEFAULT_BUTTON" = "OK";
-"ALERT_EMPTY_MESSAGE" = "All songs in the playlist failed to convert to MP3 format.";
+"ALERT_EMPTY_MESSAGE" = "All songs failed to convert to MP3 format.";
 
 "ALERT_MISSING_TITLE" = "Are you sure you want to burn the MP3 CD?";
 "ALERT_MISSING_DEFAULT_BUTTON" = "Burn";
 "ALERT_MISSING_ALTERNATE_BUTTON" = "Don't Burn";
-"ALERT_MISSING_MESSAGE" = "%i songs out of %i in the playlist failed to convert to MP3 format and will be missing from the MP3 CD.";
+"ALERT_MISSING_MESSAGE" = "%i songs out of %i total failed to convert to MP3 format and will be missing from the MP3 CD.";
+
+"ALERT_LIMITED_TITLE" = "MP3 CD has more than %i songs!";
+"ALERT_LIMITED_DEFAULT_BUTTON" = "Burn MP3 CD";
+"ALERT_LIMITED_ALTERNATE_BUTTON" = "Purchase Now";
+"ALERT_LIMITED_OTHER_BUTTON" = "Cancel";
+"ALERT_LIMITED_MESSAGE" = "Burning MP3 CDs with more than %i songs requires a one-time purchase of MP3 CD Maker Unlimited.\n\nClick \"Continue Burning\" to burn an MP3 CD with the first %i songs, or click \"Purchase Now\" to buy MP3 CD Maker Unlimited as an In-App Purchase from the App Store.";
 
 "ALERT_SPACE_TITLE" = "Are you sure you want to burn the MP3 CD?";
 "ALERT_SPACE_DEFAULT_BUTTON" = "Burn";
 "ALERT_SPACE_ALTERNATE_BUTTON" = "Don't Burn";
-"ALERT_SPACE_MESSAGE" = "There is not enough space on this disc to fit all the songs from the playlist (%@ MB required for %@ MB available).\n\nAfter this MP3 CD is burned, you will be prompted for more discs to continue burning the entire playlist.";
+"ALERT_SPACE_MESSAGE" = "There is not enough space on this disc to fit all the songs (%@ MB required for %@ MB available).\n\nAfter this MP3 CD is burned, you will be prompted for more discs to continue burning the remaining songs.";
 
-"ALERT_FAILURE_TITLE" = "MP3 CD failed burning!";
-"ALERT_FAILURE_DEFAULT_BUTTON" = "Try Again";
-"ALERT_FAILURE_ALTERNATE_BUTTON" = "Stop";
+"ALERT_BURN_FAILED_TITLE" = "MP3 CD failed burning!";
+"ALERT_BURN_FAILED_DEFAULT_BUTTON" = "Try Again";
+"ALERT_BURN_FAILED_ALTERNATE_BUTTON" = "Stop";
 
 "ALERT_CONTINUE_TITLE" = "Do you want to burn the next MP3 CD?";
 "ALERT_CONTINUE_DEFAULT_BUTTON" = "Burn Next CD";
 "ALERT_CONTINUE_ALTERNATE_BUTTON" = "Stop";
-"ALERT_CONTINUE_MESSAGE" = "There are %i songs from the playlist left to burn.";
+"ALERT_CONTINUE_MESSAGE" = "There are %i songs left to burn.";
 
 "ALERT_SUCCESS_TITLE" = "MP3 CD burned successfully!";
 "ALERT_SUCCESS_DEFAULT_BUTTON" = "Done";
+
+"ALERT_UNAVAILABLE_TITLE" = "In-App Purchases not available!";
+"ALERT_UNAVAILABLE_DEFAULT_BUTTON" = "OK";
+"ALERT_UNAVAILABLE_MESSAGE" = "Make sure your computer is connected to the Internet and App Store users are allowed to make payments.";
+
+"ALERT_PURCHASE_TITLE" = "MP3 CD Maker Unlimited successfully purchased!";
+"ALERT_PURCHASE_DEFAULT_BUTTON" = "Done";
+"ALERT_PURCHASE_MESSAGE" = "Your can now burn MP3 CDs with more than %i songs. Thanks for supporting the development of MP3 CD Maker!";
+
+"ALERT_RESTORE_TITLE" = "MP3 CD Maker Unlimited successfully restored!";
+"ALERT_RESTORE_DEFAULT_BUTTON" = "Done";
+"ALERT_RESTORE_MESSAGE" = "Your can now burn MP3 CDs with more than %i songs. Thanks for supporting the development of MP3 CD Maker!";
+
+"ALERT_IAP_FAILED_TITLE" = "In-App Purchase error!";
+"ALERT_IAP_FAILED_BUTTON" = "OK";
+"ALERT_IAP_FAILED_MESSAGE" = "There was a problem communicating with the App Store. Please try again later.\n\n%@";
 
 "TOOLTIP_ERROR" = "%@ (%@)";
 

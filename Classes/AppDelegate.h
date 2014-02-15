@@ -15,14 +15,14 @@
 
 #import <AppKit/AppKit.h>
 
-#define kUserDefaultKey_BitRate @"bitRate"
-#define kUserDefaultKey_SkipMPEG @"skipMPEG"
+#import "InAppStore.h"
 
-@interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource> {
+@interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource, InAppStoreDelegate> {
   NSString* _cachePath;
   NSUInteger _transcoders;
   dispatch_semaphore_t _transcodingSemaphore;
   NSNumberFormatter* _numberFormatter;
+  BOOL _cancelled;
 }
 @property(nonatomic, assign) IBOutlet NSWindow* mainWindow;
 @property(nonatomic, assign) IBOutlet NSTableView* tableView;
@@ -36,6 +36,8 @@
 - (IBAction)updatePlaylist:(id)sender;
 - (IBAction)updateQuality:(id)sender;
 - (IBAction)updateSkip:(id)sender;
-- (IBAction)make:(id)sender;
+- (IBAction)burnDisc:(id)sender;
 - (IBAction)cancelTranscoding:(id)sender;
+- (IBAction)purchaseUnlimited:(id)sender;
+- (IBAction)restorePurchases:(id)sender;
 @end

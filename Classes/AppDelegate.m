@@ -23,17 +23,19 @@
 #import "ITunesLibrary.h"
 #import "MP3Transcoder.h"
 
-#define kSectorSize 2048
+#define kUserDefaultKey_BitRate @"bitRate"
+#define kUserDefaultKey_SkipMPEG @"skipMPEG"
+
+#define kLimitedModeMaxTracks 50
+#define kIAPProductIdentifier @"unlimited_tracks"
+
+#define kDiscSectorSize 2048
 
 @interface MP3Disc : NSObject
 @property(nonatomic, retain) NSString* name;
 @property(nonatomic, retain) NSArray* tracks;
 @property(nonatomic) NSRange trackRange;
 @property(nonatomic, retain) DRBurn* burn;
-@end
-
-@interface AppDelegate ()
-@property(nonatomic, getter = isCancelled) BOOL cancelled;
 @end
 
 static const char _associatedKey;
@@ -118,21 +120,25 @@ static NSUInteger _GetFileSize(NSString* path) {
     [self _updateInfo];
     [_mainWindow makeKeyAndOrderFront:nil];
   } else {
-    NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_FATAL_TITLE", nil)
-                                     defaultButton:NSLocalizedString(@"ALERT_FATAL_DEFAULT_BUTTON", nil)
+    NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_NO_LIBRARY_TITLE", nil)
+                                     defaultButton:NSLocalizedString(@"ALERT_NO_LIBRARY_DEFAULT_BUTTON", nil)
                                    alternateButton:nil
                                        otherButton:nil
-                         informativeTextWithFormat:NSLocalizedString(@"ALERT_FATAL_MESSAGE", nil), error.localizedDescription];
+                         informativeTextWithFormat:NSLocalizedString(@"ALERT_NO_LIBRARY_MESSAGE", nil), error.localizedDescription];
     [alert runModal];
     [NSApp terminate:nil];
   }
+  [[InAppStore sharedStore] setDelegate:self];
 }
 
 - (void)_quitAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
-  [NSApp replyToApplicationShouldTerminate:(returnCode == NSOKButton ? YES : NO)];
+  [NSApp replyToApplicationShouldTerminate:(returnCode == NSAlertDefaultReturn ? YES : NO)];
 }
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender {
+  if ([[InAppStore sharedStore] isBusy]) {
+    return NSTerminateCancel;
+  }
   if (self.transcoding) {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_QUIT_TITLE", nil)
                                      defaultButton:NSLocalizedString(@"ALERT_QUIT_DEFAULT_BUTTON", nil)
@@ -170,6 +176,54 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (id)tableView:(NSTableView*)tableView objectValueForTableColumn:(NSTableColumn*)tableColumn row:(NSInteger)row {
   return [NSNumber numberWithInteger:(row + 1)];
+}
+
+- (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
+  if ((menuItem.action == @selector(purchaseUnlimited:)) || (menuItem.action == @selector(restorePurchases:))) {
+    return ![[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kIAPProductIdentifier] && ![[InAppStore sharedStore] isBusy];
+  }
+  return YES;
+}
+
+- (void)inAppStore:(InAppStore*)store didPurchaseProductWithIdentifier:(NSString*)identifier {
+  NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_PURCHASE_TITLE", nil)
+                                   defaultButton:NSLocalizedString(@"ALERT_PURCHASE_DEFAULT_BUTTON", nil)
+                                 alternateButton:nil
+                                     otherButton:nil
+                       informativeTextWithFormat:NSLocalizedString(@"ALERT_PURCHASE_MESSAGE", nil), (int)kLimitedModeMaxTracks];
+  [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+}
+
+- (void)inAppStore:(InAppStore*)store didRestoreProductWithIdentifier:(NSString*)identifier {
+  [NSApp activateIgnoringOtherApps:YES];
+  NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_RESTORE_TITLE", nil)
+                                   defaultButton:NSLocalizedString(@"ALERT_RESTORE_DEFAULT_BUTTON", nil)
+                                 alternateButton:nil
+                                     otherButton:nil
+                       informativeTextWithFormat:NSLocalizedString(@"ALERT_RESTORE_MESSAGE", nil), (int)kLimitedModeMaxTracks];
+  [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+}
+
+- (void)_reportIAPError:(NSError*)error {
+  [NSApp activateIgnoringOtherApps:YES];
+  NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_IAP_FAILED_TITLE", nil)
+                                   defaultButton:NSLocalizedString(@"ALERT_IAP_FAILED_BUTTON", nil)
+                                 alternateButton:nil
+                                     otherButton:nil
+                       informativeTextWithFormat:NSLocalizedString(@"ALERT_IAP_FAILED_MESSAGE", nil), error.localizedDescription];
+  [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+}
+
+- (void)inAppStore:(InAppStore*)store didFailFindingProductWithIdentifier:(NSString*)identifier {
+  [self _reportIAPError:nil];
+}
+
+- (void)inAppStore:(InAppStore*)store didFailPurchasingProductWithIdentifier:(NSString*)identifier error:(NSError*)error {
+  [self _reportIAPError:error];
+}
+
+- (void)inAppStore:(InAppStore*)store didFailRestoreWithError:(NSError*)error {
+  [self _reportIAPError:error];
 }
 
 @end
@@ -213,7 +267,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (void)_continueAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
-  if (returnCode == NSOKButton) {
+  if (returnCode == NSAlertDefaultReturn) {
     [alert.window orderOut:nil];
     [self _prepareDisc:disc];
   }
@@ -225,9 +279,9 @@ static NSUInteger _GetFileSize(NSString* path) {
   if ([[status objectForKey:DRStatusStateKey] isEqualToString:DRStatusStateFailed]) {
     NSDictionary* error = [status objectForKey:DRErrorStatusKey];
     if ([[error objectForKey:DRErrorStatusErrorKey] unsignedIntValue] != (unsigned int)kDRUserCanceledErr) {
-      NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_FAILURE_TITLE", nil)
-                                       defaultButton:NSLocalizedString(@"ALERT_FAILURE_DEFAULT_BUTTON", nil)
-                                     alternateButton:NSLocalizedString(@"ALERT_FAILURE_ALTERNATE_BUTTON", nil)
+      NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_BURN_FAILED_TITLE", nil)
+                                       defaultButton:NSLocalizedString(@"ALERT_BURN_FAILED_DEFAULT_BUTTON", nil)
+                                     alternateButton:NSLocalizedString(@"ALERT_BURN_FAILED_ALTERNATE_BUTTON", nil)
                                          otherButton:nil
                            informativeTextWithFormat:@"%@", [error objectForKey:DRErrorStatusErrorStringKey]];
       [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_continueAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
@@ -261,7 +315,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (void)_spaceAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
-  if (returnCode == NSOKButton) {
+  if (returnCode == NSAlertDefaultReturn) {
     [alert.window orderOut:nil];
     [self _burnDisc:disc force:YES];
   }
@@ -271,7 +325,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 - (void)_burnDisc:(MP3Disc*)disc force:(BOOL)force {
   NSDictionary* deviceStatus = [[disc.burn device] status];
   uint64_t availableFreeSectors = [[[deviceStatus valueForKey:DRDeviceMediaInfoKey] valueForKey:DRDeviceMediaFreeSpaceKey] longLongValue];
-  uint64_t availableFreeBytes = availableFreeSectors * kSectorSize;
+  uint64_t availableFreeBytes = availableFreeSectors * kDiscSectorSize;
   while (1) {
     DRFolder* rootFolder = [DRFolder virtualFolderWithName:disc.name];
     uint64_t estimatedTrackLengthInBytes = 0;
@@ -319,8 +373,8 @@ static NSUInteger _GetFileSize(NSString* path) {
         break;  // Should never happen
       }
     } else {
-      NSString* trackString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(trackLengthInSectors * kSectorSize / (1000 * 1000))]];  // Display MB not MiB like in Finder
-      NSString* availableString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(availableFreeSectors * kSectorSize / (1000 * 1000))]];  // Display MB not MiB like in Finder
+      NSString* trackString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(trackLengthInSectors * kDiscSectorSize / (1000 * 1000))]];  // Display MB not MiB like in Finder
+      NSString* availableString = [_numberFormatter stringFromNumber:[NSNumber numberWithUnsignedInteger:(availableFreeSectors * kDiscSectorSize / (1000 * 1000))]];  // Display MB not MiB like in Finder
       NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_SPACE_TITLE", nil)
                                        defaultButton:NSLocalizedString(@"ALERT_SPACE_DEFAULT_BUTTON", nil)
                                      alternateButton:NSLocalizedString(@"ALERT_SPACE_ALTERNATE_BUTTON", nil)
@@ -335,7 +389,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (void)_burnSetupPanelDidEnd:(DRSetupPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
-  if (returnCode == NSOKButton) {
+  if (returnCode == NSAlertDefaultReturn) {
     [panel orderOut:nil];
     disc.burn = [(DRBurnSetupPanel*)panel burnObject];
     [self _burnDisc:disc force:(disc.trackRange.location > 0 ? YES : NO)];
@@ -353,7 +407,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (void)_missingAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
-  if (returnCode == NSOKButton) {
+  if (returnCode == NSAlertDefaultReturn) {
     [alert.window orderOut:nil];
     [self _prepareDisc:disc];
   }
@@ -461,17 +515,57 @@ static NSUInteger _GetFileSize(NSString* path) {
   });
 }
 
-- (IBAction)make:(id)sender {
+- (void)_burnTracks:(NSArray*)tracks {
   Playlist* playlist = [_playlistController.selectedObjects firstObject];
+  [self _prepareDiscWithName:playlist.name tracks:tracks];
+}
+
+- (void)_purchaseAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  NSArray* tracks = (__bridge NSArray*)contextInfo;
+  if (returnCode == NSAlertDefaultReturn) {
+    [alert.window orderOut:nil];
+    [self _burnTracks:tracks];
+  } else if (returnCode == NSAlertAlternateReturn) {
+    [self purchaseUnlimited:nil];
+  }
+  CFRelease((__bridge CFTypeRef)tracks);
+}
+
+- (IBAction)burnDisc:(id)sender {
   NSArray* tracks = _trackController.selectedObjects;
   if (!tracks.count) {
     tracks = _trackController.arrangedObjects;
   }
-  [self _prepareDiscWithName:playlist.name tracks:tracks];
+  if ((tracks.count <= kLimitedModeMaxTracks) || [[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kIAPProductIdentifier]) {
+    [self _burnTracks:tracks];
+  } else {
+    tracks = [tracks subarrayWithRange:NSMakeRange(0, kLimitedModeMaxTracks)];
+    NSAlert* alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:NSLocalizedString(@"ALERT_LIMITED_TITLE", nil), (int)kLimitedModeMaxTracks]
+                                     defaultButton:NSLocalizedString(@"ALERT_LIMITED_DEFAULT_BUTTON", nil)
+                                   alternateButton:NSLocalizedString(@"ALERT_LIMITED_ALTERNATE_BUTTON", nil)
+                                       otherButton:NSLocalizedString(@"ALERT_LIMITED_OTHER_BUTTON", nil)
+                         informativeTextWithFormat:NSLocalizedString(@"ALERT_LIMITED_MESSAGE", nil), (int)kLimitedModeMaxTracks, (int)kLimitedModeMaxTracks];
+    [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_purchaseAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(tracks)];
+  }
 }
 
 - (IBAction)cancelTranscoding:(id)sender {
   _cancelled = YES;
+}
+
+- (IBAction)purchaseUnlimited:(id)sender {
+  if (![[InAppStore sharedStore] purchaseProductWithIdentifier:kIAPProductIdentifier]) {
+    NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_UNAVAILABLE_TITLE", nil)
+                                     defaultButton:NSLocalizedString(@"ALERT_UNAVAILABLE_DEFAULT_BUTTON", nil)
+                                   alternateButton:nil
+                                       otherButton:nil
+                         informativeTextWithFormat:NSLocalizedString(@"ALERT_UNAVAILABLE_MESSAGE", nil)];
+    [alert beginSheetModalForWindow:_mainWindow modalDelegate:nil didEndSelector:NULL contextInfo:NULL];
+  }
+}
+
+- (IBAction)restorePurchases:(id)sender {
+  [[InAppStore sharedStore] restorePurchases];
 }
 
 @end
