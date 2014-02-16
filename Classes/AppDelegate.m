@@ -24,9 +24,11 @@
 #import "AppDelegate.h"
 #import "ITunesLibrary.h"
 #import "MP3Transcoder.h"
+#import "MixpanelTracker.h"
 
 #define kUserDefaultKey_BitRate @"bitRate"
 #define kUserDefaultKey_SkipMPEG @"skipMPEG"
+#define kUserDefaultKey_ProductPrice @"productPrice"
 
 #define kLimitedModeMaxTracks 50
 #define kInAppProductIdentifier @"mp3_cd_maker_unlimited"
@@ -115,6 +117,10 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
+#ifdef NDEBUG
+  [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
+#endif
+  
   NSError* error = nil;
   NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
   if (playlists == nil) {
@@ -132,7 +138,9 @@ static NSUInteger _GetFileSize(NSString* path) {
   [[InAppStore sharedStore] setDelegate:self];
   
 #ifdef NDEBUG
-  [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
+  [MixpanelTracker startWithToken:@"71588ec5096841ed7cf8ac7960ef2a4b"];
+#else
+  [MixpanelTracker startWithToken:@"0be0a548637919d5b1579a67b8bad560"];
 #endif
   
   [_mainWindow makeKeyAndOrderFront:nil];
@@ -192,7 +200,13 @@ static NSUInteger _GetFileSize(NSString* path) {
   return YES;
 }
 
+- (void)inAppStore:(InAppStore*)store didFindProductWithIdentifier:(NSString*)identifier price:(NSDecimalNumber*)price currencyLocale:(NSLocale*)locale {
+  [[NSUserDefaults standardUserDefaults] setObject:price forKey:kUserDefaultKey_ProductPrice];
+}
+
 - (void)inAppStore:(InAppStore*)store didPurchaseProductWithIdentifier:(NSString*)identifier {
+  MIXPANEL_TRACK_EVENT(@"Finish Purchase", nil);
+  MIXPANEL_TRACK_PURCHASE([[NSUserDefaults standardUserDefaults] floatForKey:kUserDefaultKey_ProductPrice], nil);
   if ([[InAppStore sharedStore] isPurchasing]) {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_PURCHASE_TITLE", nil)
                                      defaultButton:NSLocalizedString(@"ALERT_PURCHASE_DEFAULT_BUTTON", nil)
@@ -203,7 +217,12 @@ static NSUInteger _GetFileSize(NSString* path) {
   }
 }
 
+- (void)inAppStoreDidCancelPurchase:(InAppStore*)store {
+  MIXPANEL_TRACK_EVENT(@"Cancel Purchase", nil);
+}
+
 - (void)inAppStore:(InAppStore*)store didRestoreProductWithIdentifier:(NSString*)identifier {
+  MIXPANEL_TRACK_EVENT(@"Finish Restore", nil);
   if ([[InAppStore sharedStore] isRestoring]) {
     [NSApp activateIgnoringOtherApps:YES];
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_RESTORE_TITLE", nil)
@@ -215,7 +234,12 @@ static NSUInteger _GetFileSize(NSString* path) {
   }
 }
 
+- (void)inAppStoreDidCancelRestore:(InAppStore*)store {
+  MIXPANEL_TRACK_EVENT(@"Cancel Restore", nil);
+}
+
 - (void)_reportIAPError:(NSError*)error {
+  MIXPANEL_TRACK_EVENT(@"IAP Error", @{@"Description": error.localizedDescription});
   [NSApp activateIgnoringOtherApps:YES];
   NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_IAP_FAILED_TITLE", nil)
                                    defaultButton:NSLocalizedString(@"ALERT_IAP_FAILED_BUTTON", nil)
@@ -277,6 +301,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (void)_continueAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  MIXPANEL_TRACK_EVENT(@"Prompt Continue", @{@"Choice": [NSNumber numberWithInteger:returnCode]});
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSAlertDefaultReturn) {
     [alert.window orderOut:nil];
@@ -290,14 +315,18 @@ static NSUInteger _GetFileSize(NSString* path) {
   if ([[status objectForKey:DRStatusStateKey] isEqualToString:DRStatusStateFailed]) {
     NSDictionary* error = [status objectForKey:DRErrorStatusKey];
     if ([[error objectForKey:DRErrorStatusErrorKey] unsignedIntValue] != (unsigned int)kDRUserCanceledErr) {
+      MIXPANEL_TRACK_EVENT(@"Burn Error", @{@"Description": [error objectForKey:DRErrorStatusErrorStringKey]});
       NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_BURN_FAILED_TITLE", nil)
                                        defaultButton:NSLocalizedString(@"ALERT_BURN_FAILED_DEFAULT_BUTTON", nil)
                                      alternateButton:NSLocalizedString(@"ALERT_BURN_FAILED_ALTERNATE_BUTTON", nil)
                                          otherButton:nil
                            informativeTextWithFormat:@"%@", [error objectForKey:DRErrorStatusErrorStringKey]];
       [alert beginSheetModalForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_continueAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
+    } else {
+      MIXPANEL_TRACK_EVENT(@"Cancel Burn", nil);
     }
   } else {
+    MIXPANEL_TRACK_EVENT(@"Finish Burn", nil);
     disc.trackRange = NSMakeRange(disc.trackRange.location + disc.trackRange.length, disc.tracks.count - (disc.trackRange.location + disc.trackRange.length));
     if (disc.trackRange.length > 0) {
       NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_CONTINUE_TITLE", nil)
@@ -325,6 +354,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (void)_spaceAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  MIXPANEL_TRACK_EVENT(@"Prompt Space", @{@"Choice": [NSNumber numberWithInteger:returnCode]});
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSAlertDefaultReturn) {
     [alert.window orderOut:nil];
@@ -364,6 +394,11 @@ static NSUInteger _GetFileSize(NSString* path) {
     DRTrack* track = [DRTrack trackForRootFolder:rootFolder];
     uint64_t trackLengthInSectors = [track estimateLength];
     if (trackLengthInSectors < availableFreeSectors) {
+      MIXPANEL_TRACK_EVENT(@"Perform Burn", @{
+                                               @"Start Track": [NSNumber numberWithInteger:(disc.trackRange.location + 1)],
+                                               @"End Track": [NSNumber numberWithInteger:(disc.trackRange.location + disc.trackRange.length)],
+                                               @"Total Tracks": [NSNumber numberWithInteger:disc.tracks.count]
+                                               });
 #ifndef NDEBUG
       NSLog(@"Burning tracks %lu-%lu out of %lu from playlist \"%@\"", disc.trackRange.location + 1, disc.trackRange.location + disc.trackRange.length, disc.tracks.count, disc.name);
       for (DRFile* file in rootFolder.children) {
@@ -399,6 +434,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (void)_burnSetupPanelDidEnd:(DRSetupPanel*)panel returnCode:(int)returnCode contextInfo:(void*)contextInfo {
+  MIXPANEL_TRACK_EVENT(@"Prompt Setup", @{@"Choice": [NSNumber numberWithInteger:returnCode]});
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSAlertDefaultReturn) {
     [panel orderOut:nil];
@@ -417,6 +453,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (void)_missingAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  MIXPANEL_TRACK_EVENT(@"Prompt Missing", @{@"Choice": [NSNumber numberWithInteger:returnCode]});
   MP3Disc* disc = (__bridge MP3Disc*)contextInfo;
   if (returnCode == NSAlertDefaultReturn) {
     [alert.window orderOut:nil];
@@ -496,6 +533,9 @@ static NSUInteger _GetFileSize(NSString* path) {
               [transcodedTracks addObject:track];
             }
           }
+          if (transcodedTracks.count < tracks.count) {
+            MIXPANEL_TRACK_EVENT(@"Fail Transcoding", @{@"In": [NSNumber numberWithInteger:tracks.count], @"Out": [NSNumber numberWithInteger:transcodedTracks.count]});
+          }
           if (transcodedTracks.count == 0) {
             NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_EMPTY_TITLE", nil)
                                              defaultButton:NSLocalizedString(@"ALERT_EMPTY_DEFAULT_BUTTON", nil)
@@ -532,6 +572,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (void)_purchaseAlertDidEnd:(NSAlert*)alert returnCode:(NSInteger)returnCode contextInfo:(void*)contextInfo {
+  MIXPANEL_TRACK_EVENT(@"Prompt Purchase", @{@"Choice": [NSNumber numberWithInteger:returnCode]});
   NSArray* tracks = (__bridge NSArray*)contextInfo;
   if (returnCode == NSAlertDefaultReturn) {
     [alert.window orderOut:nil];
@@ -547,6 +588,12 @@ static NSUInteger _GetFileSize(NSString* path) {
   if (!tracks.count) {
     tracks = _trackController.arrangedObjects;
   }
+  MIXPANEL_TRACK_EVENT(@"Start Burn", @{
+                                     @"Tracks": [NSNumber numberWithInteger:tracks.count],
+                                     @"Bit Rate": [NSNumber numberWithInteger:KBitsPerSecondFromBitRate([[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate], true)],
+                                     @"VBR": [NSNumber numberWithBool:BitRateIsVBR([[NSUserDefaults standardUserDefaults] integerForKey:kUserDefaultKey_BitRate])],
+                                     @"Skip MPEG": [NSNumber numberWithBool:[[NSUserDefaults standardUserDefaults] boolForKey:kUserDefaultKey_SkipMPEG]]
+                                     });
   if ((tracks.count <= kLimitedModeMaxTracks) || [[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kInAppProductIdentifier]) {
     [self _burnTracks:tracks];
   } else {
@@ -561,11 +608,14 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (IBAction)cancelTranscoding:(id)sender {
+  MIXPANEL_TRACK_EVENT(@"Cancel Transcoding", nil);
   _cancelled = YES;
 }
 
 - (IBAction)purchaseUnlimited:(id)sender {
-  if (![[InAppStore sharedStore] purchaseProductWithIdentifier:kInAppProductIdentifier]) {
+  if ([[InAppStore sharedStore] purchaseProductWithIdentifier:kInAppProductIdentifier]) {
+    MIXPANEL_TRACK_EVENT(@"Start Purchase", nil);
+  } else {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_UNAVAILABLE_TITLE", nil)
                                      defaultButton:NSLocalizedString(@"ALERT_UNAVAILABLE_DEFAULT_BUTTON", nil)
                                    alternateButton:nil
@@ -576,6 +626,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (IBAction)restorePurchases:(id)sender {
+  MIXPANEL_TRACK_EVENT(@"Restore Purchase", nil);
   [[InAppStore sharedStore] restorePurchases];
 }
 

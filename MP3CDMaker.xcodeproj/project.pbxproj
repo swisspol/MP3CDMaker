@@ -22,6 +22,8 @@
 		E279087418AF401000B752E1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E279087218AF401000B752E1 /* main.m */; };
 		E296D7E518A56F890091AAF3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = E296D7E118A56F890091AAF3 /* Localizable.strings */; };
 		E296D7E618A56F890091AAF3 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = E296D7E318A56F890091AAF3 /* MainMenu.xib */; };
+		E2C2446718B15482003682FB /* Base64.c in Sources */ = {isa = PBXBuildFile; fileRef = E2C2446318B15482003682FB /* Base64.c */; };
+		E2C2446818B15482003682FB /* MixpanelTracker.m in Sources */ = {isa = PBXBuildFile; fileRef = E2C2446618B15482003682FB /* MixpanelTracker.m */; };
 		E2E12C731343C96000B48700 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = E2E12C721343C96000B48700 /* AppDelegate.m */; };
 		E2FE559D1836FD3C00617532 /* Icon.iconset in Resources */ = {isa = PBXBuildFile; fileRef = E2FE559C1836FD3C00617532 /* Icon.iconset */; };
 /* End PBXBuildFile section */
@@ -48,6 +50,10 @@
 		E279087218AF401000B752E1 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E296D7E218A56F890091AAF3 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E296D7E418A56F890091AAF3 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
+		E2C2446318B15482003682FB /* Base64.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Base64.c; sourceTree = "<group>"; };
+		E2C2446418B15482003682FB /* Base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Base64.h; sourceTree = "<group>"; };
+		E2C2446518B15482003682FB /* MixpanelTracker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MixpanelTracker.h; sourceTree = "<group>"; };
+		E2C2446618B15482003682FB /* MixpanelTracker.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MixpanelTracker.m; sourceTree = "<group>"; };
 		E2D09A4E1343C4B60096A4CC /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E2D09A531343C4D90096A4CC /* Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Prefix.pch; sourceTree = "<group>"; };
 		E2E12C711343C96000B48700 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -90,6 +96,7 @@
 				E2D09A4E1343C4B60096A4CC /* Info.plist */,
 				E2E12C701343C96000B48700 /* Classes */,
 				E279086F18AF401000B752E1 /* InAppStore */,
+				E2C2446218B15482003682FB /* MixpanelTracker */,
 				E2E12D011343CDCD00B48700 /* Resources */,
 				29B97323FDCFA39411CA2CEA /* Frameworks and Libraries */,
 				19C28FACFE9D520D11CA2CBB /* Products */,
@@ -121,6 +128,18 @@
 			);
 			name = InAppStore;
 			path = InAppStore/InAppStore;
+			sourceTree = "<group>";
+		};
+		E2C2446218B15482003682FB /* MixpanelTracker */ = {
+			isa = PBXGroup;
+			children = (
+				E2C2446318B15482003682FB /* Base64.c */,
+				E2C2446418B15482003682FB /* Base64.h */,
+				E2C2446518B15482003682FB /* MixpanelTracker.h */,
+				E2C2446618B15482003682FB /* MixpanelTracker.m */,
+			);
+			name = MixpanelTracker;
+			path = MixpanelTracker/MixpanelTracker;
 			sourceTree = "<group>";
 		};
 		E2E12C701343C96000B48700 /* Classes */ = {
@@ -253,6 +272,8 @@
 				E245747018AC2334000007B5 /* ITunesLibrary.m in Sources */,
 				E279087418AF401000B752E1 /* main.m in Sources */,
 				E279087318AF401000B752E1 /* InAppStore.m in Sources */,
+				E2C2446818B15482003682FB /* MixpanelTracker.m in Sources */,
+				E2C2446718B15482003682FB /* Base64.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

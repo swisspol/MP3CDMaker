@@ -68,6 +68,10 @@ NSUInteger KBitsPerSecondFromBitRate(BitRate bitRate, BOOL isStereo) {
   return (isStereo ? _stereoBitRateLUT[bitRate][3] : _monoBitRateLUT[bitRate][3]);
 }
 
+BOOL BitRateIsVBR(BitRate bitRate) {
+  return _stereoBitRateLUT[bitRate][1] ? YES : NO;
+}
+
 static void _SetTranscoderErrorFromAVError(NSError** error, int code, NSString* format, ...) {
   if (error) {
     va_list arguments;

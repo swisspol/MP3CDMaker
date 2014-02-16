@@ -33,7 +33,8 @@ typedef enum {
 
 extern NSString* const MP3TranscoderErrorDomain;
 
-NSUInteger KBitsPerSecondFromBitRate(BitRate bitRate, BOOL isStereo);
+extern NSUInteger KBitsPerSecondFromBitRate(BitRate bitRate, BOOL isStereo);
+extern BOOL BitRateIsVBR(BitRate bitRate);
 
 @interface MP3Transcoder : NSObject
 + (MP3Transcoder*)sharedTranscoder;
