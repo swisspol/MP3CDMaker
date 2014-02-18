@@ -223,7 +223,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (void)inAppStore:(InAppStore*)store didRestoreProductWithIdentifier:(NSString*)identifier {
   MIXPANEL_TRACK_EVENT(@"Finish Restore", nil);
-  if ([[InAppStore sharedStore] isRestoring]) {
+  if ([identifier isEqualToString:kInAppProductIdentifier] && [[InAppStore sharedStore] isRestoring]) {
     [NSApp activateIgnoringOtherApps:YES];
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_RESTORE_TITLE", nil)
                                      defaultButton:NSLocalizedString(@"ALERT_RESTORE_DEFAULT_BUTTON", nil)
