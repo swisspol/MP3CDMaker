@@ -239,7 +239,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (void)_reportIAPError:(NSError*)error {
-  MIXPANEL_TRACK_EVENT(@"IAP Error", @{@"Description": error.localizedDescription});
+  MIXPANEL_TRACK_EVENT(@"IAP Error", @{@"Description": error.localizedDescription ? error.localizedDescription : @""});
   [NSApp activateIgnoringOtherApps:YES];
   NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_IAP_FAILED_TITLE", nil)
                                    defaultButton:NSLocalizedString(@"ALERT_IAP_FAILED_BUTTON", nil)
