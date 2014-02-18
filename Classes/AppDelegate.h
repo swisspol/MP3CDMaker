@@ -38,6 +38,6 @@
 - (IBAction)updateSkip:(id)sender;
 - (IBAction)burnDisc:(id)sender;
 - (IBAction)cancelTranscoding:(id)sender;
-- (IBAction)purchaseUnlimited:(id)sender;
+- (IBAction)purchaseFeature:(id)sender;
 - (IBAction)restorePurchases:(id)sender;
 @end

@@ -194,7 +194,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
-  if ((menuItem.action == @selector(purchaseUnlimited:)) || (menuItem.action == @selector(restorePurchases:))) {
+  if ((menuItem.action == @selector(purchaseFeature:)) || (menuItem.action == @selector(restorePurchases:))) {
     return ![[InAppStore sharedStore] hasPurchasedProductWithIdentifier:kInAppProductIdentifier] && ![[InAppStore sharedStore] isPurchasing] && ![[InAppStore sharedStore] isRestoring];
   }
   return YES;
@@ -578,7 +578,7 @@ static NSUInteger _GetFileSize(NSString* path) {
     [alert.window orderOut:nil];
     [self _burnTracks:tracks];
   } else if (returnCode == NSAlertAlternateReturn) {
-    [self purchaseUnlimited:nil];
+    [self purchaseFeature:nil];
   }
   CFRelease((__bridge CFTypeRef)tracks);
 }
@@ -612,7 +612,7 @@ static NSUInteger _GetFileSize(NSString* path) {
   _cancelled = YES;
 }
 
-- (IBAction)purchaseUnlimited:(id)sender {
+- (IBAction)purchaseFeature:(id)sender {
   if ([[InAppStore sharedStore] purchaseProductWithIdentifier:kInAppProductIdentifier]) {
     MIXPANEL_TRACK_EVENT(@"Start Purchase", nil);
   } else {

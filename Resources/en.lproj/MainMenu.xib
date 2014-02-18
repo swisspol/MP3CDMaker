@@ -125,7 +125,7 @@
                             <menuItem title="Purchase Unlimited Songs Feature…" id="pHV-6H-PZQ">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
-                                    <action selector="purchaseUnlimited:" target="494" id="Xg6-eg-TwA"/>
+                                    <action selector="purchaseFeature:" target="494" id="snQ-GN-cQo"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Restore Purchases…" tag="2" id="ybx-Dq-4mu">
@@ -315,10 +315,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.duration" id="1rU-bi-BP7">
                                                     <dictionary key="options">
-                                                        <string key="NSValueTransformerName">DurationTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">DurationTransformer</string>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -337,10 +337,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.kind" id="W5w-k1-RiX">
                                                     <dictionary key="options">
-                                                        <string key="NSValueTransformerName">KindTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">KindTransformer</string>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -412,10 +412,10 @@ DQ
                             <action selector="burnDisc:" target="494" id="uM8-Gv-PZG"/>
                             <binding destination="ois-Es-bWL" name="enabled2" keyPath="arrangedObjects" previousBinding="si3-eC-Rsm" id="flA-QU-fpL">
                                 <dictionary key="options">
-                                    <integer key="NSMultipleValuesPlaceholder" value="-1"/>
+                                    <integer key="NSNullPlaceholder" value="-1"/>
                                     <integer key="NSNotApplicablePlaceholder" value="-1"/>
                                     <integer key="NSNoSelectionPlaceholder" value="-1"/>
-                                    <integer key="NSNullPlaceholder" value="-1"/>
+                                    <integer key="NSMultipleValuesPlaceholder" value="-1"/>
                                     <string key="NSValueTransformerName">IsNotEmptyTransformer</string>
                                 </dictionary>
                             </binding>
