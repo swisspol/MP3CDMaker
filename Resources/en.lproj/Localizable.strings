@@ -20,7 +20,7 @@
 "ALERT_LIMITED_DEFAULT_BUTTON" = "Burn MP3 CD";
 "ALERT_LIMITED_ALTERNATE_BUTTON" = "Purchase Now";
 "ALERT_LIMITED_OTHER_BUTTON" = "Cancel";
-"ALERT_LIMITED_MESSAGE" = "Burning MP3 CDs with more than %i songs requires a one-time purchase of MP3 CD Maker Unlimited.\n\nClick \"Continue Burning\" to burn an MP3 CD with the first %i songs, or click \"Purchase Now\" to buy MP3 CD Maker Unlimited as an In-App Purchase from the App Store.";
+"ALERT_LIMITED_MESSAGE" = "Burning MP3 CDs with more than %i songs requires a one-time purchase of the Unlimited Songs feature.\n\nClick \"Continue Burning\" to burn an MP3 CD with the first %i songs, or click \"Purchase Now\" to buy the Unlimited Songs feature as an In-App Purchase from the App Store.";
 
 "ALERT_SPACE_TITLE" = "Are you sure you want to burn the MP3 CD?";
 "ALERT_SPACE_DEFAULT_BUTTON" = "Burn";
@@ -43,11 +43,11 @@
 "ALERT_UNAVAILABLE_DEFAULT_BUTTON" = "OK";
 "ALERT_UNAVAILABLE_MESSAGE" = "Make sure your computer is connected to the Internet and App Store users are allowed to make payments.";
 
-"ALERT_PURCHASE_TITLE" = "MP3 CD Maker Unlimited successfully purchased!";
+"ALERT_PURCHASE_TITLE" = "Unlimited Songs feature successfully purchased!";
 "ALERT_PURCHASE_DEFAULT_BUTTON" = "Done";
 "ALERT_PURCHASE_MESSAGE" = "Your can now burn MP3 CDs with more than %i songs. Thanks for supporting the development of MP3 CD Maker!";
 
-"ALERT_RESTORE_TITLE" = "MP3 CD Maker Unlimited successfully restored!";
+"ALERT_RESTORE_TITLE" = "Unlimited Songs feature successfully restored!";
 "ALERT_RESTORE_DEFAULT_BUTTON" = "Done";
 "ALERT_RESTORE_MESSAGE" = "Your can now burn MP3 CDs with more than %i songs. Thanks for supporting the development of MP3 CD Maker!";
 
