@@ -45,7 +45,8 @@ static TrackKind _TrackKindFromString(NSString* string) {
 
 @implementation ITunesLibrary
 
-// TODO: Sandbox entitlement bug may prevent accessing iTunes media folder (http://www.cocoabuilder.com/archive/cocoa/312617-music-read-only-sandbox-entitlement-doesn-seem-to-work.html)
+// TODO: Sandbox entitlement bug may prevent accessing iTunes media folder (radr://15266641)
+// http://www.cocoabuilder.com/archive/cocoa/312617-music-read-only-sandbox-entitlement-doesn-seem-to-work.html
 + (NSArray*)loadPlaylists:(NSError**)error {
   NSMutableDictionary* cache = [[NSMutableDictionary alloc] init];
   NSMutableArray* array = nil;
