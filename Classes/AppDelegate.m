@@ -26,6 +26,7 @@
 #import "MP3Transcoder.h"
 #import "MixpanelTracker.h"
 
+#define kUserDefaultKey_LibraryPath @"libraryPath"
 #define kUserDefaultKey_BitRate @"bitRate"
 #define kUserDefaultKey_SkipMPEG @"skipMPEG"
 #define kUserDefaultKey_ProductPrice @"productPrice"
@@ -116,24 +117,47 @@ static NSUInteger _GetFileSize(NSString* path) {
   [_infoTextField setStringValue:[NSString stringWithFormat:format, countString, timeString, sizeString]];
 }
 
+- (BOOL)_saveBookmark:(NSString*)defaultKey withURL:(NSURL*)url {
+  NSError* error = nil;
+  NSData* data = [url bookmarkDataWithOptions:(NSURLBookmarkCreationWithSecurityScope | NSURLBookmarkCreationSecurityScopeAllowOnlyReadAccess) includingResourceValuesForKeys:nil relativeToURL:nil error:&error];
+  if (data) {
+    [[NSUserDefaults standardUserDefaults] setObject:data forKey:defaultKey];
+    return YES;
+  }
+  NSLog(@"Failed saving bookmark: %@", error);
+  return NO;
+}
+
+- (NSString*)_loadBookmark:(NSString*)defaultKey {
+  NSData* data = [[NSUserDefaults standardUserDefaults] objectForKey:defaultKey];
+  if (data) {
+    BOOL isStale;
+    NSError* error = nil;
+    NSURL* url = [NSURL URLByResolvingBookmarkData:data options:NSURLBookmarkResolutionWithSecurityScope relativeToURL:nil bookmarkDataIsStale:&isStale error:&error];
+    if (url) {
+      if ([url startAccessingSecurityScopedResource]) {
+#if 0  // TODO: This doesn't work on 10.9.1: re-saving a staled bookmark will be prevent it to be saved again if becoming staled again
+        if (!isStale || [self _saveBookmark:defaultKey withURL:url]) {
+          return url.path;
+        }
+#else
+        return url.path;
+#endif
+      } else {
+        NSLog(@"Failed accessing bookmark");
+      }
+    } else {
+      NSLog(@"Failed resolving bookmark: %@", error);
+    }
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:defaultKey];
+  }
+  return nil;
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
 #ifdef NDEBUG
   [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
 #endif
-  
-  NSError* error = nil;
-  NSArray* playlists = [ITunesLibrary loadPlaylists:&error];
-  if (playlists == nil) {
-    NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_NO_LIBRARY_TITLE", nil)
-                                     defaultButton:NSLocalizedString(@"ALERT_NO_LIBRARY_DEFAULT_BUTTON", nil)
-                                   alternateButton:nil
-                                       otherButton:nil
-                         informativeTextWithFormat:NSLocalizedString(@"ALERT_NO_LIBRARY_MESSAGE", nil), error.localizedDescription];
-    [alert runModal];
-    [NSApp terminate:nil];
-  }
-  [_playlistController setContent:playlists];
-  [self _updateInfo];
   
   [[InAppStore sharedStore] setDelegate:self];
   
@@ -142,6 +166,52 @@ static NSUInteger _GetFileSize(NSString* path) {
 #else
   [MixpanelTracker startWithToken:@"0be0a548637919d5b1579a67b8bad560"];
 #endif
+  
+  NSError* error = nil;
+  NSArray* playlists = nil;
+#ifndef NDEBUG
+  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"forceSelectLibrary"]) {
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultKey_LibraryPath];
+  } else
+#endif
+  {
+    NSString* libraryPath = [self _loadBookmark:kUserDefaultKey_LibraryPath];
+    if (libraryPath) {
+      playlists = [[ITunesLibrary sharedLibrary] loadPlaylistsFromLibraryAtPath:libraryPath error:&error];
+    } else {
+      playlists = [[ITunesLibrary sharedLibrary] loadPlaylistsFromLibraryAtDefaultPath:&error];
+    }
+  }
+  while (playlists == nil) {
+    NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_NO_LIBRARY_TITLE", nil)
+                                     defaultButton:NSLocalizedString(@"ALERT_NO_LIBRARY_DEFAULT_BUTTON", nil)
+                                   alternateButton:NSLocalizedString(@"ALERT_NO_ALTERNATE_BUTTON", nil)
+                                       otherButton:nil
+                         informativeTextWithFormat:NSLocalizedString(@"ALERT_NO_LIBRARY_MESSAGE", nil), error.localizedDescription];
+    alert.alertStyle = NSCriticalAlertStyle;
+    if ([alert runModal] == NSAlertAlternateReturn) {
+      [NSApp terminate:nil];
+    }
+    
+    MIXPANEL_TRACK_EVENT(@"Select Library", nil);
+    NSOpenPanel* openPanel = [NSOpenPanel openPanel];
+    openPanel.canChooseFiles = NO;
+    openPanel.canChooseDirectories = YES;
+    openPanel.prompt = NSLocalizedString(@"LIBRARY_SELECT_BUTTON", nil);
+    openPanel.title = NSLocalizedString(@"LIBRARY_SELECT_TITLE", nil);
+    if ([openPanel runModal] != NSFileHandlingPanelOKButton) {
+      [NSApp terminate:nil];
+    }
+    NSURL* url = [openPanel URL];
+    
+    playlists = [[ITunesLibrary sharedLibrary] loadPlaylistsFromLibraryAtPath:url.path error:&error];
+    if (playlists) {
+      [self _saveBookmark:kUserDefaultKey_LibraryPath withURL:url];
+    }
+  }
+  MIXPANEL_TRACK_EVENT(@"Load Playlists", nil);
+  [_playlistController setContent:playlists];
+  [self _updateInfo];
   
   [_mainWindow makeKeyAndOrderFront:nil];
 }

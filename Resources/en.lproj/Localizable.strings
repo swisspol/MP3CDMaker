@@ -1,6 +1,7 @@
 "ALERT_NO_LIBRARY_TITLE" = "Can't load playlists from iTunes library!";
-"ALERT_NO_LIBRARY_DEFAULT_BUTTON" = "Quit";
-"ALERT_NO_LIBRARY_MESSAGE" = "%@\n\nMake sure your iTunes library is located at \"Music/iTunes\" in your home folder.";
+"ALERT_NO_LIBRARY_DEFAULT_BUTTON" = "Select iTunes Library";
+"ALERT_NO_ALTERNATE_BUTTON" = "Quit";
+"ALERT_NO_LIBRARY_MESSAGE" = "Please select your iTunes library folder to continue. It is typically located at \"Music/iTunes\" in your home folder unless you have moved it.\n\n[%@]";
 
 "ALERT_QUIT_TITLE" = "Are you sure you want to quit?";
 "ALERT_QUIT_DEFAULT_BUTTON" = "Quit";
@@ -54,6 +55,9 @@
 "ALERT_IAP_FAILED_TITLE" = "In-App Purchase error!";
 "ALERT_IAP_FAILED_BUTTON" = "OK";
 "ALERT_IAP_FAILED_MESSAGE" = "There was a problem communicating with the App Store. Please try again later.\n\n%@";
+
+"LIBRARY_SELECT_BUTTON" = "Select";
+"LIBRARY_SELECT_TITLE" = "Select Your iTunes Library Folder";
 
 "TOOLTIP_ERROR" = "%@ (%@)";
 

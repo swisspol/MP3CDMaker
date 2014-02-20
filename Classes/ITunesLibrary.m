@@ -43,69 +43,94 @@ static TrackKind _TrackKindFromString(NSString* string) {
 @implementation Track
 @end
 
-@implementation ITunesLibrary
-
 // TODO: Sandbox entitlement bug may prevent accessing iTunes media folder (radr://15266641)
 // http://www.cocoabuilder.com/archive/cocoa/312617-music-read-only-sandbox-entitlement-doesn-seem-to-work.html
-+ (NSArray*)loadPlaylists:(NSError**)error {
-  NSMutableDictionary* cache = [[NSMutableDictionary alloc] init];
-  NSMutableArray* array = nil;
+@implementation ITunesLibrary
+
++ (ITunesLibrary*)sharedLibrary {
+  static ITunesLibrary* library = nil;
+  static dispatch_once_t token = 0;
+  dispatch_once(&token, ^{
+    library = [[ITunesLibrary alloc] init];
+  });
+  return library;
+}
+
+- (NSArray*)loadPlaylistsFromLibraryAtDefaultPath:(NSError**)error {
   if (NSClassFromString(@"ITLibrary")) {
+    NSMutableArray* array = nil;
     ITLibrary* library = [ITLibrary libraryWithAPIVersion:@"1.0" error:error];  // TODO: This leaks thousands of objects as of iTunes 11.1.4
     if (library) {
-      array = [[NSMutableArray alloc] init];
-      for (ITLibPlaylist* libraryPlaylist in library.allPlaylists) {
-        if (libraryPlaylist.master
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusic)
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMovies)
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindTVShows)
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindiTunesU)
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindPurchases)
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindHomeVideos)
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusicVideos)
-            || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindLibraryMusicVideos)) {
-          continue;
-        }
-        Playlist* playlist = [[Playlist alloc] init];
-        playlist.name = libraryPlaylist.name;
-        NSMutableArray* tracks = [[NSMutableArray alloc] init];
-        for (ITLibMediaItem* libraryItem in libraryPlaylist.items) {
-          TrackKind kind = _TrackKindFromString(libraryItem.kind);
-          if ((kind == kTrackKind_Unknown) || libraryItem.userDisabled || libraryItem.drmProtected) {
+      NSString* musicPath = library.musicFolderLocation.path;
+      if ([[NSFileManager defaultManager] contentsOfDirectoryAtPath:musicPath error:error]) {  // Ensure the media directory is accessible to the app sandbox
+        NSMutableDictionary* cache = [[NSMutableDictionary alloc] init];
+        array = [[NSMutableArray alloc] init];
+        for (ITLibPlaylist* libraryPlaylist in library.allPlaylists) {
+          if (libraryPlaylist.master
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusic)
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMovies)
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindTVShows)
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindiTunesU)
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindPurchases)
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindHomeVideos)
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusicVideos)
+              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindLibraryMusicVideos)) {
             continue;
           }
-          NSURL* location = libraryItem.location;
-          if (![location isFileURL]) {
-            continue;
+          Playlist* playlist = [[Playlist alloc] init];
+          playlist.name = libraryPlaylist.name;
+          NSMutableArray* tracks = [[NSMutableArray alloc] init];
+          for (ITLibMediaItem* libraryItem in libraryPlaylist.items) {
+            TrackKind kind = _TrackKindFromString(libraryItem.kind);
+            if ((kind == kTrackKind_Unknown) || libraryItem.userDisabled || libraryItem.drmProtected) {
+              continue;
+            }
+            NSURL* location = libraryItem.location;
+            if (![location isFileURL]) {
+              continue;
+            }
+            NSString* persistentID = [NSString stringWithFormat:@"%016lX", [libraryItem.persistentID unsignedLongValue]];
+            Track* track = [cache objectForKey:persistentID];
+            if (track == nil) {
+              track = [[Track alloc] init];
+              track.persistentID = persistentID;
+              track.location = location;
+              track.title = libraryItem.title;
+              track.album = libraryItem.album.title;
+              track.artist = libraryItem.artist.name;
+              track.duration = (NSTimeInterval)libraryItem.totalTime / 1000.0;
+              track.kind = kind;
+              track.size = libraryItem.size;
+              [cache setObject:track forKey:persistentID];
+            }
+            [tracks addObject:track];
           }
-          NSString* persistentID = [NSString stringWithFormat:@"%016lX", [libraryItem.persistentID unsignedLongValue]];
-          Track* track = [cache objectForKey:persistentID];
-          if (track == nil) {
-            track = [[Track alloc] init];
-            track.persistentID = persistentID;
-            track.location = location;
-            track.title = libraryItem.title;
-            track.album = libraryItem.album.title;
-            track.artist = libraryItem.artist.name;
-            track.duration = (NSTimeInterval)libraryItem.totalTime / 1000.0;
-            track.kind = kind;
-            track.size = libraryItem.size;
-            [cache setObject:track forKey:persistentID];
-          }
-          [tracks addObject:track];
+          playlist.tracks = tracks;
+          [array addObject:playlist];
         }
-        playlist.tracks = tracks;
-        [array addObject:playlist];
+        [array sortUsingComparator:^NSComparisonResult(Playlist* playlist1, Playlist* playlist2) {
+          return [playlist1.name localizedStandardCompare:playlist2.name];
+        }];
       }
     }
+    return array;
   } else {
     NSLog(@"iTunesLibrary.framework not available: falling back to reading iTunes library XML file directly");
-    NSString* musicPath = [NSSearchPathForDirectoriesInDomains(NSMusicDirectory, NSUserDomainMask, YES) firstObject];
-    NSString* plistPath = [musicPath stringByAppendingPathComponent:@"iTunes/iTunes Music Library.xml"];
-    NSData* plistData = [NSData dataWithContentsOfFile:plistPath options:NSDataReadingMappedIfSafe error:error];
-    if (plistData) {
-      NSDictionary* plist = [NSPropertyListSerialization propertyListWithData:plistData options:NSPropertyListImmutable format:NULL error:error];
-      if (plist) {
+    NSString* defaultPath = [@"~/Music/iTunes" stringByStandardizingPath];
+    return [self loadPlaylistsFromLibraryAtPath:defaultPath error:error];
+  }
+}
+
+- (NSArray*)loadPlaylistsFromLibraryAtPath:(NSString*)path error:(NSError**)error {
+  NSMutableDictionary* cache = [[NSMutableDictionary alloc] init];
+  NSMutableArray* array = nil;
+  NSString* plistPath = [path stringByAppendingPathComponent:@"iTunes Music Library.xml"];
+  NSData* plistData = [NSData dataWithContentsOfFile:plistPath options:NSDataReadingMappedIfSafe error:error];
+  if (plistData) {
+    NSDictionary* plist = [NSPropertyListSerialization propertyListWithData:plistData options:NSPropertyListImmutable format:NULL error:error];
+    if (plist) {
+      NSURL* musicURL = [NSURL URLWithString:[plist objectForKey:@"Music Folder"]];
+      if ([[NSFileManager defaultManager] contentsOfDirectoryAtPath:musicURL.path error:error]) {  // Ensure the media directory is accessible to the app sandbox
         array = [[NSMutableArray alloc] init];
         NSDictionary* plistTracks = [plist objectForKey:@"Tracks"];
         for (NSDictionary* plistPlaylist in [plist objectForKey:@"Playlists"]) {
@@ -153,12 +178,12 @@ static TrackKind _TrackKindFromString(NSString* string) {
           playlist.tracks = tracks;
           [array addObject:playlist];
         }
+        [array sortUsingComparator:^NSComparisonResult(Playlist* playlist1, Playlist* playlist2) {
+          return [playlist1.name localizedStandardCompare:playlist2.name];
+        }];
       }
     }
   }
-  [array sortUsingComparator:^NSComparisonResult(Playlist* playlist1, Playlist* playlist2) {
-    return [playlist1.name localizedStandardCompare:playlist2.name];
-  }];
   return array;
 }
 
