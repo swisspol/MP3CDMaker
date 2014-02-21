@@ -13,12 +13,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#import <iTunesLibrary/ITLibrary.h>
-#import <iTunesLibrary/ITLibPlaylist.h>
-#import <iTunesLibrary/ITLibMediaItem.h>
-#import <iTunesLibrary/ITLibAlbum.h>
-#import <iTunesLibrary/ITLibArtist.h>
-
 #import "ITunesLibrary.h"
 
 static TrackKind _TrackKindFromString(NSString* string) {
@@ -57,68 +51,8 @@ static TrackKind _TrackKindFromString(NSString* string) {
 }
 
 - (NSArray*)loadPlaylistsFromLibraryAtDefaultPath:(NSError**)error {
-  if (NSClassFromString(@"ITLibrary")) {
-    NSMutableArray* array = nil;
-    ITLibrary* library = [ITLibrary libraryWithAPIVersion:@"1.0" error:error];  // TODO: This leaks thousands of objects as of iTunes 11.1.4
-    if (library) {
-      NSString* musicPath = library.musicFolderLocation.path;
-      if ([[NSFileManager defaultManager] contentsOfDirectoryAtPath:musicPath error:error]) {  // Ensure the media directory is accessible to the app sandbox
-        NSMutableDictionary* cache = [[NSMutableDictionary alloc] init];
-        array = [[NSMutableArray alloc] init];
-        for (ITLibPlaylist* libraryPlaylist in library.allPlaylists) {
-          if (libraryPlaylist.master
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusic)
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMovies)
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindTVShows)
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindiTunesU)
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindPurchases)
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindHomeVideos)
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindMusicVideos)
-              || (libraryPlaylist.distinguishedKind == ITLibDistinguishedPlaylistKindLibraryMusicVideos)) {
-            continue;
-          }
-          Playlist* playlist = [[Playlist alloc] init];
-          playlist.name = libraryPlaylist.name;
-          NSMutableArray* tracks = [[NSMutableArray alloc] init];
-          for (ITLibMediaItem* libraryItem in libraryPlaylist.items) {
-            TrackKind kind = _TrackKindFromString(libraryItem.kind);
-            if ((kind == kTrackKind_Unknown) || libraryItem.userDisabled || libraryItem.drmProtected) {
-              continue;
-            }
-            NSURL* location = libraryItem.location;
-            if (![location isFileURL]) {
-              continue;
-            }
-            NSString* persistentID = [NSString stringWithFormat:@"%016lX", [libraryItem.persistentID unsignedLongValue]];
-            Track* track = [cache objectForKey:persistentID];
-            if (track == nil) {
-              track = [[Track alloc] init];
-              track.persistentID = persistentID;
-              track.location = location;
-              track.title = libraryItem.title;
-              track.album = libraryItem.album.title;
-              track.artist = libraryItem.artist.name;
-              track.duration = (NSTimeInterval)libraryItem.totalTime / 1000.0;
-              track.kind = kind;
-              track.size = libraryItem.size;
-              [cache setObject:track forKey:persistentID];
-            }
-            [tracks addObject:track];
-          }
-          playlist.tracks = tracks;
-          [array addObject:playlist];
-        }
-        [array sortUsingComparator:^NSComparisonResult(Playlist* playlist1, Playlist* playlist2) {
-          return [playlist1.name localizedStandardCompare:playlist2.name];
-        }];
-      }
-    }
-    return array;
-  } else {
-    NSLog(@"iTunesLibrary.framework not available: falling back to reading iTunes library XML file directly");
-    NSString* defaultPath = [@"~/Music/iTunes" stringByStandardizingPath];
-    return [self loadPlaylistsFromLibraryAtPath:defaultPath error:error];
-  }
+  NSString* defaultPath = [@"~/Music/iTunes" stringByStandardizingPath];
+  return [self loadPlaylistsFromLibraryAtPath:defaultPath error:error];
 }
 
 - (NSArray*)loadPlaylistsFromLibraryAtPath:(NSString*)path error:(NSError**)error {
