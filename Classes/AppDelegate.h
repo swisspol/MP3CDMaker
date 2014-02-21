@@ -24,6 +24,7 @@
   NSNumberFormatter* _numberFormatter;
   BOOL _cancelled;
 }
+@property(nonatomic, assign) IBOutlet NSView* accessoryView;
 @property(nonatomic, assign) IBOutlet NSWindow* mainWindow;
 @property(nonatomic, assign) IBOutlet NSTableView* tableView;
 @property(nonatomic, assign) IBOutlet NSArrayController* playlistController;

@@ -64,6 +64,12 @@ static NSUInteger _GetFileSize(NSString* path) {
     kUserDefaultKey_SkipMPEG: @NO
   };
   [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
+#ifndef NDEBUG
+  if (getenv("resetDefaults")) {
+    [[NSUserDefaults standardUserDefaults] removePersistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+  }
+#endif
 }
 
 - (void)_clearCache {
@@ -154,6 +160,15 @@ static NSUInteger _GetFileSize(NSString* path) {
   return nil;
 }
 
+// Under App Sandbox, the "com.apple.security.assets.music.read-only" entitlement gives access to the entire content of "~/Music"
+// EXCEPT for anything inside "~/Music/iTunes Music/" and anything inside "~/iTunes/iTunes Media/"
+// HOWEVER the specific subdirectories "~/iTunes/iTunes Music/Music/" and "~/iTunes/iTunes Media/Music/" are accessible
+// ("iTunes Music" was the name used by iTunes 8 or earlier)
+// This creates a number of problems:
+// - It doesn't handle old iTunes library which may have their music at the top level of the media folder
+// - It doesn't handle the case of the user having relocated the iTunes library
+// - Podcasts cannot be accessed since they are in "~/iTunes/iTunes Media/Music/Podcasts/"
+// In conclusion, it doesn't really make sense to use the "com.apple.security.assets.music.read-only" entitlement
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
 #ifdef NDEBUG
   [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
@@ -169,20 +184,35 @@ static NSUInteger _GetFileSize(NSString* path) {
   
   NSError* error = nil;
   NSArray* playlists = nil;
-#ifndef NDEBUG
-  if ([[NSUserDefaults standardUserDefaults] boolForKey:@"forceSelectLibrary"]) {
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:kUserDefaultKey_LibraryPath];
-  } else
-#endif
-  {
-    NSString* libraryPath = [self _loadBookmark:kUserDefaultKey_LibraryPath];
+  NSString* libraryPath = [self _loadBookmark:kUserDefaultKey_LibraryPath];
+  NSURL* libraryURL = nil;
+  while (1) {
+    if (libraryPath == nil) {
+      MIXPANEL_TRACK_EVENT(@"Select Library", nil);
+      NSOpenPanel* openPanel = [NSOpenPanel openPanel];
+      openPanel.canChooseFiles = NO;
+      openPanel.canChooseDirectories = YES;
+      openPanel.prompt = NSLocalizedString(@"LIBRARY_SELECT_BUTTON", nil);
+      openPanel.title = NSLocalizedString(@"LIBRARY_SELECT_TITLE", nil);
+      openPanel.accessoryView = _accessoryView;
+      if (libraryURL == nil) {
+        openPanel.directoryURL = [NSURL fileURLWithPath:[ITunesLibrary libraryDefaultPath] isDirectory:YES];
+      }
+      if ([openPanel runModal] == NSFileHandlingPanelOKButton) {
+        libraryURL = [openPanel URL];
+        libraryPath = libraryURL.path;
+      }
+    }
+    
     if (libraryPath) {
       playlists = [[ITunesLibrary sharedLibrary] loadPlaylistsFromLibraryAtPath:libraryPath error:&error];
-    } else {
-      playlists = [[ITunesLibrary sharedLibrary] loadPlaylistsFromLibraryAtDefaultPath:&error];
+      if (playlists) {
+        if (libraryURL) {
+          [self _saveBookmark:kUserDefaultKey_LibraryPath withURL:libraryURL];
+        }
+        break;
+      }
     }
-  }
-  while (playlists == nil) {
     NSAlert* alert = [NSAlert alertWithMessageText:NSLocalizedString(@"ALERT_NO_LIBRARY_TITLE", nil)
                                      defaultButton:NSLocalizedString(@"ALERT_NO_LIBRARY_DEFAULT_BUTTON", nil)
                                    alternateButton:NSLocalizedString(@"ALERT_NO_ALTERNATE_BUTTON", nil)
@@ -192,22 +222,7 @@ static NSUInteger _GetFileSize(NSString* path) {
     if ([alert runModal] == NSAlertAlternateReturn) {
       [NSApp terminate:nil];
     }
-    
-    MIXPANEL_TRACK_EVENT(@"Select Library", nil);
-    NSOpenPanel* openPanel = [NSOpenPanel openPanel];
-    openPanel.canChooseFiles = NO;
-    openPanel.canChooseDirectories = YES;
-    openPanel.prompt = NSLocalizedString(@"LIBRARY_SELECT_BUTTON", nil);
-    openPanel.title = NSLocalizedString(@"LIBRARY_SELECT_TITLE", nil);
-    if ([openPanel runModal] != NSFileHandlingPanelOKButton) {
-      [NSApp terminate:nil];
-    }
-    NSURL* url = [openPanel URL];
-    
-    playlists = [[ITunesLibrary sharedLibrary] loadPlaylistsFromLibraryAtPath:url.path error:&error];
-    if (playlists) {
-      [self _saveBookmark:kUserDefaultKey_LibraryPath withURL:url];
-    }
+    libraryPath = nil;
   }
   MIXPANEL_TRACK_EVENT(@"Load Playlists", nil);
   [_playlistController setContent:playlists];

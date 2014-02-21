@@ -48,6 +48,6 @@ typedef enum {
 
 @interface ITunesLibrary : NSObject
 + (ITunesLibrary*)sharedLibrary;
-- (NSArray*)loadPlaylistsFromLibraryAtDefaultPath:(NSError**)error;
++ (NSString*)libraryDefaultPath;
 - (NSArray*)loadPlaylistsFromLibraryAtPath:(NSString*)path error:(NSError**)error;
 @end

@@ -166,6 +166,7 @@
         </menu>
         <customObject id="494" userLabel="AppDelegate" customClass="AppDelegate">
             <connections>
+                <outlet property="accessoryView" destination="PPH-Hy-HRa" id="ua8-YE-Bhg"/>
                 <outlet property="infoTextField" destination="Ge0-B4-9As" id="I2n-5i-0hX"/>
                 <outlet property="mainWindow" destination="1604" id="1606"/>
                 <outlet property="playlistController" destination="jPY-2w-sy6" id="I6b-Sh-6rz"/>
@@ -315,10 +316,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.duration" id="1rU-bi-BP7">
                                                     <dictionary key="options">
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">DurationTransformer</string>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <string key="NSValueTransformerName">DurationTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -337,10 +338,10 @@
                                             <connections>
                                                 <binding destination="ois-Es-bWL" name="value" keyPath="arrangedObjects.kind" id="W5w-k1-RiX">
                                                     <dictionary key="options">
-                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
+                                                        <string key="NSValueTransformerName">KindTransformer</string>
                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                         <bool key="NSConditionallySetsEditable" value="YES"/>
-                                                        <string key="NSValueTransformerName">KindTransformer</string>
+                                                        <bool key="NSCreatesSortDescriptor" value="NO"/>
                                                     </dictionary>
                                                 </binding>
                                             </connections>
@@ -412,10 +413,10 @@ DQ
                             <action selector="burnDisc:" target="494" id="uM8-Gv-PZG"/>
                             <binding destination="ois-Es-bWL" name="enabled2" keyPath="arrangedObjects" previousBinding="si3-eC-Rsm" id="flA-QU-fpL">
                                 <dictionary key="options">
-                                    <integer key="NSNullPlaceholder" value="-1"/>
+                                    <integer key="NSMultipleValuesPlaceholder" value="-1"/>
                                     <integer key="NSNotApplicablePlaceholder" value="-1"/>
                                     <integer key="NSNoSelectionPlaceholder" value="-1"/>
-                                    <integer key="NSMultipleValuesPlaceholder" value="-1"/>
+                                    <integer key="NSNullPlaceholder" value="-1"/>
                                     <string key="NSValueTransformerName">IsNotEmptyTransformer</string>
                                 </dictionary>
                             </binding>
@@ -562,7 +563,31 @@ DQ
                 </binding>
             </connections>
         </arrayController>
+        <customView id="PPH-Hy-HRa">
+            <rect key="frame" x="0.0" y="0.0" width="640" height="86"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="gT3-zv-AXW">
+                    <rect key="frame" x="13" y="43" width="614" height="28"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                    <textFieldCell key="cell" controlSize="small" allowsUndo="NO" sendsActionOnEndEditing="YES" id="2an-Lg-Knn">
+                        <font key="font" metaFont="smallSystemBold"/>
+                        <string key="title">Please select your iTunes library folder so MP3 CD Maker can retrieve your playlists and music files. It is typically located at "Music/iTunes" in your home folder unless you have moved it.</string>
+                        <color key="textColor" white="0.25" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" id="F2F-Mx-3x5">
+                    <rect key="frame" x="13" y="15" width="614" height="14"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                    <textFieldCell key="cell" controlSize="small" allowsUndo="NO" sendsActionOnEndEditing="YES" title="MP3 CD Maker will not modify your iTunes library in any way and only prompt you for its location on first launch." id="w4S-AH-qYH">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" white="0.25" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+        </customView>
         <userDefaultsController representsSharedInstance="YES" id="l3i-jC-gIX"/>
-        <customObject id="ylS-Cw-B7j" customClass="NSFontManager"/>
     </objects>
 </document>

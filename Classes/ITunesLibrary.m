@@ -37,8 +37,6 @@ static TrackKind _TrackKindFromString(NSString* string) {
 @implementation Track
 @end
 
-// TODO: Sandbox entitlement bug may prevent accessing iTunes media folder (radr://15266641)
-// http://www.cocoabuilder.com/archive/cocoa/312617-music-read-only-sandbox-entitlement-doesn-seem-to-work.html
 @implementation ITunesLibrary
 
 + (ITunesLibrary*)sharedLibrary {
@@ -50,21 +48,23 @@ static TrackKind _TrackKindFromString(NSString* string) {
   return library;
 }
 
-- (NSArray*)loadPlaylistsFromLibraryAtDefaultPath:(NSError**)error {
-  NSString* defaultPath = [@"~/Music/iTunes" stringByStandardizingPath];
-  return [self loadPlaylistsFromLibraryAtPath:defaultPath error:error];
++ (NSString*)libraryDefaultPath {
+  return [[@"~/Music/iTunes" stringByExpandingTildeInPath] stringByResolvingSymlinksInPath];  // Fix path to not go through symlinks in App Sandbox container
 }
 
 - (NSArray*)loadPlaylistsFromLibraryAtPath:(NSString*)path error:(NSError**)error {
   NSMutableDictionary* cache = [[NSMutableDictionary alloc] init];
   NSMutableArray* array = nil;
-  NSString* plistPath = [path stringByAppendingPathComponent:@"iTunes Music Library.xml"];
+  NSString* plistPath = [path stringByAppendingPathComponent:@"iTunes Library.xml"];
+  if (![[NSFileManager defaultManager] fileExistsAtPath:plistPath]) {
+    plistPath = [path stringByAppendingPathComponent:@"iTunes Music Library.xml"];
+  }
   NSData* plistData = [NSData dataWithContentsOfFile:plistPath options:NSDataReadingMappedIfSafe error:error];
   if (plistData) {
     NSDictionary* plist = [NSPropertyListSerialization propertyListWithData:plistData options:NSPropertyListImmutable format:NULL error:error];
     if (plist) {
-      NSURL* musicURL = [NSURL URLWithString:[plist objectForKey:@"Music Folder"]];
-      if ([[NSFileManager defaultManager] contentsOfDirectoryAtPath:musicURL.path error:error]) {  // Ensure the media directory is accessible to the app sandbox
+      NSString* mediaPath = [[NSURL URLWithString:[plist objectForKey:@"Music Folder"]] path];
+      if ([[NSFileManager defaultManager] contentsOfDirectoryAtPath:mediaPath error:error]) {  // Ensure the media directory is accessible to the app sandbox
         array = [[NSMutableArray alloc] init];
         NSDictionary* plistTracks = [plist objectForKey:@"Tracks"];
         for (NSDictionary* plistPlaylist in [plist objectForKey:@"Playlists"]) {
