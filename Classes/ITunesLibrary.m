@@ -98,7 +98,7 @@ static TrackKind _TrackKindFromString(NSString* string) {
             if (track == nil) {
               track = [[Track alloc] init];
               track.persistentID = persistentID;
-              track.location = location;
+              track.path = location.path;
               track.title = [plistTrack objectForKey:@"Name"];
               track.album = [plistTrack objectForKey:@"Album"];
               track.artist = [plistTrack objectForKey:@"Artist"];

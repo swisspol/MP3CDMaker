@@ -30,7 +30,7 @@ typedef enum {
 
 @interface Track : NSObject
 @property(nonatomic, copy) NSString* persistentID;
-@property(nonatomic, retain) NSURL* location;
+@property(nonatomic, retain) NSString* path;
 @property(nonatomic, copy) NSString* title;
 @property(nonatomic, copy) NSString* album;
 @property(nonatomic, copy) NSString* artist;

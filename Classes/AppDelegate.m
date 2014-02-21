@@ -45,6 +45,19 @@
 
 static const char _associatedKey;
 
+static BOOL _CanAccessFile(NSString* path, NSError** error) {
+  int fd = open([path fileSystemRepresentation], O_RDONLY);
+  if (fd <= 0) {
+    NSDictionary* info = @{
+                           NSLocalizedDescriptionKey: [NSString stringWithUTF8String:strerror(errno)]
+                           };
+    *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:info];
+    return NO;
+  }
+  close(fd);
+  return YES;
+}
+
 static NSUInteger _GetFileSize(NSString* path) {
   struct stat info;
   if (lstat([path fileSystemRepresentation], &info) == 0) {
@@ -554,10 +567,16 @@ static NSUInteger _GetFileSize(NSString* path) {
   if ([[NSUserDefaults standardUserDefaults] boolForKey:kUserDefaultKey_SkipMPEG]) {
     for (Track* track in tracks) {
       if ((track.kind == kTrackKind_MPEG) && !track.transcodedPath) {
-        track.level = 100.0;
-        track.transcodedPath = [track.location path];
-        track.transcodedSize = _GetFileSize(track.transcodedPath);  // TODO: Could we trust iTunes metadata?
-        track.transcodingError = nil;
+        NSError* error = nil;
+        if (_CanAccessFile(track.path, &error)) {
+          track.level = 100.0;
+          track.transcodedPath = track.path;
+          track.transcodedSize = _GetFileSize(track.transcodedPath);
+          track.transcodingError = nil;
+        } else {
+          track.level = 0.0;
+          track.transcodingError = error;
+        }
       }
     }
     [_tableView reloadData];  // TODO: Works around NSTableView not refreshing properly depending on scrolling position
@@ -574,7 +593,7 @@ static NSUInteger _GetFileSize(NSString* path) {
           dispatch_semaphore_wait(_transcodingSemaphore, DISPATCH_TIME_FOREVER);
           dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
             @autoreleasepool {
-              NSString* inPath = [track.location path];
+              NSString* inPath = track.path;
               NSString* outPath = [_cachePath stringByAppendingPathComponent:[[[NSProcessInfo processInfo] globallyUniqueString] stringByAppendingPathExtension:@"mp3"]];
               NSError* error = nil;
               BOOL success = [[MP3Transcoder sharedTranscoder] transcodeAudioFileAtPath:inPath
