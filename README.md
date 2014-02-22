@@ -9,6 +9,8 @@ Overview
 
 Select a music playlist from your iTunes library, then its songs will be automatically converted to MP3 format in the desired quality and burned to a CD. It works with most audio files in your iTunes library and does not require manipulating your iTunes library or playlists in any way.
 
+See the complete product description at https://itunes.apple.com/us/app/mp3-cd-maker/id820390388?mt=12.
+
 License
 =======
 
