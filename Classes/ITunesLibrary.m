@@ -15,17 +15,22 @@
 
 #import "ITunesLibrary.h"
 
+static inline BOOL _StringContainsString(NSString* a, NSString* b) {
+  NSRange range = [a rangeOfString:b];
+  return range.location != NSNotFound;
+}
+
 static TrackKind _TrackKindFromString(NSString* string) {
-  if ([string hasSuffix:@"MPEG audio file"]) {
+  if (_StringContainsString(string, @"MPEG") && !_StringContainsString(string, @"MPEG-4")) {
     return kTrackKind_MPEG;
   }
-  if ([string hasSuffix:@"AAC audio file"]) {
+  if (_StringContainsString(string, @"AAC")) {
     return kTrackKind_AAC;
   }
-  if ([string hasSuffix:@"AIFF audio file"]) {
+  if (_StringContainsString(string, @"AIFF")) {
     return kTrackKind_AIFF;
   }
-  if ([string hasSuffix:@"WAV audio file"]) {
+  if (_StringContainsString(string, @"WAV")) {
     return kTrackKind_WAV;
   }
   return kTrackKind_Unknown;
@@ -85,7 +90,7 @@ static TrackKind _TrackKindFromString(NSString* string) {
           for (NSDictionary* item in [plistPlaylist objectForKey:@"Playlist Items"]) {
             NSString* trackID = [[item objectForKey:@"Track ID"] stringValue];
             NSDictionary* plistTrack = [plistTracks objectForKey:trackID];
-            TrackKind kind = _TrackKindFromString([plistTrack objectForKey:@"Kind"]);
+            TrackKind kind = _TrackKindFromString([plistTrack objectForKey:@"Kind"]);  // This is localized
             if ((kind == kTrackKind_Unknown) || [[plistTrack objectForKey:@"Disabled"] boolValue] || [[plistTrack objectForKey:@"Protected"] boolValue]) {
               continue;
             }
