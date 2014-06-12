@@ -299,8 +299,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_ID = "net.pol-online.mp3-cd-maker";
-				BUNDLE_VERSION = 1000;
-				BUNDLE_VERSION_STRING = 1.0;
+				BUNDLE_VERSION = 1010;
+				BUNDLE_VERSION_STRING = 1.0.1;
 				CODE_SIGN_ENTITLEMENTS = Entitlements.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				DEAD_CODE_STRIPPING = YES;
@@ -342,8 +342,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_ID = "net.pol-online.mp3-cd-maker";
-				BUNDLE_VERSION = 1000;
-				BUNDLE_VERSION_STRING = 1.0;
+				BUNDLE_VERSION = 1010;
+				BUNDLE_VERSION_STRING = 1.0.1;
 				CODE_SIGN_ENTITLEMENTS = Entitlements.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				DEAD_CODE_STRIPPING = YES;
