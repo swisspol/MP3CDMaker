@@ -77,7 +77,7 @@ static NSUInteger _GetFileSize(NSString* path) {
     kUserDefaultKey_SkipMPEG: @NO
   };
   [[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
-#ifndef NDEBUG
+#if DEBUG
   if (getenv("resetDefaults")) {
     [[NSUserDefaults standardUserDefaults] removePersistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     [[NSUserDefaults standardUserDefaults] synchronize];
@@ -143,7 +143,7 @@ static NSUInteger _GetFileSize(NSString* path) {
     [[NSUserDefaults standardUserDefaults] setObject:data forKey:defaultKey];
     return YES;
   }
-  NSLog(@"Failed saving bookmark: %@", error);
+  XLOG_ERROR(@"Failed saving bookmark: %@", error);
   return NO;
 }
 
@@ -163,10 +163,10 @@ static NSUInteger _GetFileSize(NSString* path) {
         return url.path;
 #endif
       } else {
-        NSLog(@"Failed accessing bookmark");
+        XLOG_ERROR(@"Failed accessing bookmark");
       }
     } else {
-      NSLog(@"Failed resolving bookmark: %@", error);
+      XLOG_ERROR(@"Failed resolving bookmark: %@", error);
     }
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:defaultKey];
   }
@@ -183,13 +183,13 @@ static NSUInteger _GetFileSize(NSString* path) {
 // - Podcasts cannot be accessed since they are in "~/iTunes/iTunes Media/Music/Podcasts/"
 // In conclusion, it doesn't really make sense to use the "com.apple.security.assets.music.read-only" entitlement
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
-#ifdef NDEBUG
+#if !DEBUG
   [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
 #endif
   
   [[InAppStore sharedStore] setDelegate:self];
   
-#ifdef NDEBUG
+#if !DEBUG
   [MixpanelTracker startWithToken:@"71588ec5096841ed7cf8ac7960ef2a4b"];
 #else
   [MixpanelTracker startWithToken:@"0be0a548637919d5b1579a67b8bad560"];
@@ -497,12 +497,10 @@ static NSUInteger _GetFileSize(NSString* path) {
                                                @"End Track": [NSNumber numberWithInteger:(disc.trackRange.location + disc.trackRange.length)],
                                                @"Total Tracks": [NSNumber numberWithInteger:disc.tracks.count]
                                                });
-#ifndef NDEBUG
-      NSLog(@"Burning tracks %lu-%lu out of %lu from playlist \"%@\"", disc.trackRange.location + 1, disc.trackRange.location + disc.trackRange.length, disc.tracks.count, disc.name);
+      XLOG_VERBOSE(@"Burning tracks %lu-%lu out of %lu from playlist \"%@\"", disc.trackRange.location + 1, disc.trackRange.location + disc.trackRange.length, disc.tracks.count, disc.name);
       for (DRFile* file in rootFolder.children) {
-        NSLog(@"  %@", file.baseName);
+        XLOG_VERBOSE(@"  %@", file.baseName);
       }
-#endif
       DRBurnProgressPanel* progressPanel = [DRBurnProgressPanel progressPanel];
       progressPanel.delegate = self;
       [progressPanel beginProgressSheetForBurn:disc.burn layout:track modalForWindow:_mainWindow];
@@ -544,7 +542,7 @@ static NSUInteger _GetFileSize(NSString* path) {
 
 - (void)_prepareDisc:(MP3Disc*)disc {
   DRBurnSetupPanel* setupPanel = [DRBurnSetupPanel setupPanel];
-#ifndef NDEBUG
+#if DEBUG
   [setupPanel setCanSelectTestBurn:YES];
 #endif
   [setupPanel beginSetupSheetForWindow:_mainWindow modalDelegate:self didEndSelector:@selector(_burnSetupPanelDidEnd:returnCode:contextInfo:) contextInfo:(void*)CFBridgingRetain(disc)];
