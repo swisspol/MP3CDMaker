@@ -25,6 +25,9 @@
 #import "ITunesLibrary.h"
 #import "MP3Transcoder.h"
 #import "MixpanelTracker.h"
+#if DEBUG
+#import "XLAppKitOverlayLogger.h"
+#endif
 
 #define kUserDefaultKey_LibraryPath @"libraryPath"
 #define kUserDefaultKey_BitRate @"bitRate"
@@ -183,6 +186,10 @@ static NSUInteger _GetFileSize(NSString* path) {
 // - Podcasts cannot be accessed since they are in "~/iTunes/iTunes Media/Music/Podcasts/"
 // In conclusion, it doesn't really make sense to use the "com.apple.security.assets.music.read-only" entitlement
 - (void)applicationDidFinishLaunching:(NSNotification*)notification {
+#if DEBUG
+  [XLSharedFacility addLogger:[XLAppKitOverlayLogger sharedLogger]];
+#endif
+  
 #if !DEBUG
   [Crashlytics startWithAPIKey:@"936a419a4a141683e2eb17db02a13b72ee02b362"];
 #endif
