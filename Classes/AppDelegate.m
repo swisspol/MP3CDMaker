@@ -51,10 +51,10 @@ static const char _associatedKey;
 static BOOL _CanAccessFile(NSString* path, NSError** error) {
   int fd = open([path fileSystemRepresentation], O_RDONLY);
   if (fd <= 0) {
-    NSDictionary* info = @{
-                           NSLocalizedDescriptionKey: [NSString stringWithUTF8String:strerror(errno)]
-                           };
-    *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:info];
+    NSDictionary* info = @{NSLocalizedDescriptionKey: [NSString stringWithUTF8String:strerror(errno)]};
+    if (error) {
+      *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:info];
+    }
     return NO;
   }
   close(fd);
