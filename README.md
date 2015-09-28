@@ -9,7 +9,18 @@ Overview
 
 Select a music playlist from your iTunes library, then its songs will be automatically converted to MP3 format in the desired quality and burned to a CD. It works with most audio files in your iTunes library and does not require manipulating your iTunes library or playlists in any way.
 
-See the complete product description at https://itunes.apple.com/us/app/mp3-cd-maker/id820390388?mt=12.
+**FEATURES:**
+* Supports audio files in MP3, AAC, AIFF or WAV format.
+* Choose MP3 audio quality conversion from 64 Kbps to 256 Kbps or use variable bit rate encoding.
+* Converts multiple songs to MP3 format in parallel on Macs with multiple processor cores.
+* Creates hybrid ISO9660 / Joliet / HFS+ MP3 CDs compatible with all computer and car CD players.
+* Can burn multiple MP3 CDs for playlists too large to fit on a single one.
+* Burn all songs from a playlist or only selected ones.
+* Fully preserves the song order from the iTunes playlist.
+
+**IMPORTANT:**
+* A Mac with an optical drive capable of burning CDs (e.g. Apple SuperDrive) is required. 
+* DRM protected audio files (e.g. songs purchased on the iTunes Store before iTunes Plus was announced) cannot be converted to MP3 format.
 
 License
 =======
